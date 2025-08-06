@@ -1,0 +1,202 @@
+library(FSA)
+library(MuMIn)
+library(nlme)
+library(nlraa)
+library(performance)
+library(scam)
+
+## NOTE: all the code details are mainly presented in the Haddock.R file
+
+## Automatically load the *trout* dataset in R from Rachel McInerney GitHub:
+
+file_name <- 
+"https://raw.githubusercontent.com/rachel-mc/Ecological-GAMM-examples/main/TROUT.txt"
+trout <- read.delim(file_name)
+
+
+## VON BERTALANFFY GROWTH MODEL (VBGM) #########################################
+
+(start_TROUT_VBGM <- findGrowthStarts(TL ~ AGE, 
+                                      data = trout,
+                                      type = "von Bertalanffy",
+                                      plot = TRUE))
+
+## From the starting values obtained above, estimate those to be used for each
+## of the three lakes for the next step of fitting the mixed-effects VBGM
+
+vB_fun <- makeGrowthFun(type = "von Bertalanffy")
+
+LAKE_VBGM <- nlsList(TL ~ vB_fun(AGE, Linf, K, t0) | LAKE,
+                     start = c(Linf = start_TROUT_VBGM[[1]],
+                               K = start_TROUT_VBGM[[2]],
+                               t0 = start_TROUT_VBGM[[3]]),
+                     data = trout,
+                     na.action = na.omit)
+
+LAKE_VBGM
+
+
+## Using the nlme() function of "nlme" to fit the mixed-effects VBMG to yield a
+## global growth curve which accounts for the contribution of the female lake
+## trout from each of the three lakes that were sampled while accounting for the
+## non-independence of these data, using the nlsList object (LAKE_VBGM) that was
+## just created as starting values for the fixed effects of the model. Note that
+## the estimated correlation between Linf and K is high (r = -0.854) for the fixed
+## effects, whereas perfect correlation (r = -1.000) is found for these same two 
+## parameters for the random structure of the model, therefore indicating likely
+## estimation issues without preventing the mixed-effect VBGM to reach convergence.
+
+m_trout_VBGM <- nlme(TL ~ vB_fun(AGE, Linf, K, t0),
+                     fixed = Linf + K + t0 ~ 1,
+                     random = Linf + K + t0 ~ 1 | LAKE,
+                     start = fixef(LAKE_VBGM),
+                     data = trout)
+
+summary(m_trout_VBGM)
+
+
+## Model adequacy: checking the normality and homoscedasticity assumptions
+
+resid <- residuals(m_trout_VBGM, level = 0, type = "response")
+
+
+## Normality
+
+shapiro.test(resid)
+
+
+## Homoscedasticity
+
+plot(m_trout_VBGM)
+
+
+## Estimation of the marginal R2 (R2_M) and conditional R2 (R2_C) with the R2M()
+## function of "nlraa", both expressed in percentage (%).
+
+R2M(m_trout_VBGM)$R2.marginal * 100 
+
+R2M(m_trout_VBGM)$R2.conditional * 100
+
+
+## Mean Square Error (MSE_adj) of the VBGM
+
+model <- m_trout_VBGM
+data <- trout
+length <- data$TL
+n <- nrow(data)
+
+pred <- predict(model, data, level = 0)
+obs_pred <- data.frame(data, pred)
+obs_pred_resid <- transform(obs_pred, resid = length - pred)
+obs_pred_resid2 <- transform(obs_pred_resid, resid2 = resid^2)
+RSS <- sum(obs_pred_resid2$resid2)
+
+logLik <- logLik(model)
+P <- attributes(logLik)$df
+
+MSE_adj_VBGM <- RSS / (n - P)
+
+
+## Predictions of the mixed-effects VBGM
+## This step can takes many seconds if not a few minutes to be completed due to
+## the bootstrapping step with the boot_nlme() function of "nlraa". Only one of
+## the LAKE levels is provided (here: BRULE) given that we are interested in the
+## central tendency only but need to provide information about this random effect
+## to the model for predictions along with the range of ages for the complete
+## dataset (all LAKE levels combined by using the argument level = 0)
+
+model <- m_trout_VBGM
+nd <- data.frame(AGE = seq(min(trout$AGE), max(trout$AGE), 0.1), LAKE = "BRULE")
+
+estimate <- predict(model, nd, level = 0)
+
+PRED_TL <- function(x) predict(x, newdata = nd, level = 0)
+
+## The bootstrapping step will take a few minutes to be completed. Also note that
+## relying on this iterative procedure to estimate the 95% CI from the data without
+## recoursing to any underlying distribution assumptions leads to unreliable lower
+## 95% CI limits (i.e., negative values) at the beginning of the predicted growth
+## curve
+
+boot_VBGM <- boot_nlme(model, PRED_TL)
+
+pred_VBGM <- cbind(nd[,-4], summary_simulate(t(na.omit(boot_VBGM$t))))
+
+CI_VBGM <- aggregate(cbind(Estimate, Est.Error, Q2.5, Q97.5) ~ AGE,
+                                data = pred_VBGM, FUN = "mean")
+age <- nd$AGE
+lower_ci <- CI_VBGM$Q2.5
+upper_ci <- CI_VBGM$Q97.5
+
+pred_trout_VBGM <- data.frame(age, estimate, lower_ci, upper_ci)
+
+
+## SHAPE CONSTRAINED ADDITIVE MODEL (SCAM) #####################################
+
+trout$LAKE <- as.factor(trout$LAKE)
+
+m_trout_SCAM <- scam(TL ~ s(AGE, bs = "micv") + s(LAKE, bs = "re"),
+                            family = Gamma(link = "log"),
+                            optimizer = "efs",
+                            data = trout)
+
+summary(m_trout_SCAM)
+
+
+## Model adequacy assessment with a QQ plot and simulated confidence band
+
+scam.check(m_trout_SCAM)
+
+qq.scam(m_trout_SCAM, rep = 5000, level = 0.95, pch = 20)
+
+
+## Estimated in-sampled predictive performance
+
+model <- m_trout_SCAM
+
+D2 <- 100 * (1 - model$deviance / model$null.deviance)
+logLik <- logLik(model)
+P <- attributes(logLik)$df
+n <- summary(model)$n
+D2_adj <- 100 - ((n - 1) / (n - P) * (100 - D2))
+cbind(D2, D2_adj)
+
+
+## Calculate the MSE_adj of the gamma SCAM
+
+model <- m_trout_SCAM
+data <- trout
+length <- data$TL
+n <- nrow(data)
+
+pred <- predict(model, data, type = "response", exclude = "s(LAKE)")
+obs_pred <- data.frame(data, pred)
+obs_pred_resid <- transform(obs_pred, resid = length - pred)
+obs_pred_resid2 <- transform(obs_pred_resid, resid2 = resid^2)
+RSS <- sum(obs_pred_resid2$resid2)
+
+logLik <- logLik(model)
+P <- attributes(logLik)$df
+
+MSE_adj_SCAM <- RSS / (n - P)
+
+
+## Percentage of improvement (i.e., reduction) in MSE_adj from VBGM to SCAM
+
+(MSE_adj_VBGM - MSE_adj_SCAM) / MSE_adj_VBGM * 100
+
+
+## Predictions of the gamma SCAM
+
+model <- m_trout_SCAM
+
+nd <- data.frame(AGE = seq(min(trout$AGE), max(trout$AGE), by = 0.1),
+                 LAKE = "BRULE")
+
+fitted <- predict(model, nd, type = "link", exclude = "s(LAKE)", se.fit = TRUE)
+estimate <- exp(fitted$fit)
+lower_ci <- exp(fitted$fit - 1.96 * fitted$se.fit)
+upper_ci <- exp(fitted$fit + 1.96 * fitted$se.fit)
+
+age <- nd$AGE
+pred_trout_SCAM <- data.frame(age, estimate, lower_ci, upper_ci)
