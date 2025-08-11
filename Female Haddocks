@@ -4,7 +4,6 @@ library(nlme)
 library(nlraa)
 library(nlstools)
 library(performance)
-library(readr)
 library(scam)
 
 ## The female haddock data (Honsey et al. 2017) can be downloaded here:
@@ -16,7 +15,7 @@ library(scam)
 ## with the read_delim() function of "readr"
 
 url <- "https://raw.githubusercontent.com/julienmainguy/Modeling-fish-growth/refs/heads/main/haddock.txt"
-haddock <- read_delim(url)
+haddock <- read.delim(url)
 
 
 ## The headtail() function of "FSA" can be used to check the first and last three
