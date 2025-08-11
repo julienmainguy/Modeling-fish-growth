@@ -3,7 +3,6 @@ library(MuMIn)
 library(nlme)
 library(nlraa)
 library(performance)
-library(readr)
 library(scam)
 
 ## NOTE: all the details about the code are mainly presented in the Haddock.R file
@@ -13,8 +12,7 @@ library(scam)
 ## also be automatically imported with the read_delim() function of "readr":
 
 url <- "https://raw.githubusercontent.com/julienmainguy/Modeling-fish-growth/refs/heads/main/trout.txt"
-trout <- read_delim(url)
-
+trout <- read.delim(url)
 
 
 ## VON BERTALANFFY GROWTH MODEL (VBGM) #########################################
