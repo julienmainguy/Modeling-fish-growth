@@ -11,12 +11,16 @@ library(scam)
 
 ## https://datadryad.org/dataset/doi:10.5061/dryad.vb957
 
-## This *haddock* dataset is also directly available on this *Modeling-fish-growth*
-## repository in a .txt format that can be imported into R with the read.delim() 
-## function. The headtail() function of "FSA" can be used to check the first and last
-## three lines of this dataset containing 361 individual females
+## The *haddock* dataset is also directly available on this *Modeling-fish-growth*
+## repository in a .txt format that can be automatically imported into R with the
+## with the read_delim() function of "readr"
 
-url <- "https://raw.githubusercontent.com/julienmainguy/Modeling-fish-growth/refs/heads/main/haddock.txt?token=GHSAT0AAAAAADIX7WVKNC6ZRMISTQQOMKJ22EZ6G6A"
+url <- "https://raw.githubusercontent.com/julienmainguy/Modeling-fish-growth/refs/heads/main/haddock.txt"
+haddock <- read_delim(url)
+
+
+## The headtail() function of "FSA" can be used to check the first and last three
+## lines of this dataset containing 361 individual females
 
 headtail(haddock)
 
