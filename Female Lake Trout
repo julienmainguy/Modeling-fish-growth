@@ -5,18 +5,15 @@ library(nlraa)
 library(performance)
 library(scam)
 
-## NOTE: all the code details are mainly presented in the Haddock.R file
+## NOTE: all the details about the code are mainly presented in the Haddock.R file
 
-## Automatically load the *trout* dataset in R from Rachel McInerney GitHub:
-
-file_name <- 
-"https://raw.githubusercontent.com/julienmainguy/Modeling-fish-growth/main/TROUT.txt"
-trout <- read.delim(file_name)
+## The *trout* dataset is available on this *Modeling-fish-growth* repository in
+## a .txt format that can be imported into R with the read.delim() function
 
 
 ## VON BERTALANFFY GROWTH MODEL (VBGM) #########################################
 
-(start_TROUT_VBGM <- findGrowthStarts(TL ~ AGE, 
+(start_trout_VBGM <- findGrowthStarts(TL ~ AGE, 
                                       data = trout,
                                       type = "von Bertalanffy",
                                       plot = TRUE))
@@ -27,7 +24,7 @@ trout <- read.delim(file_name)
 vB_fun <- makeGrowthFun(type = "von Bertalanffy")
 
 LAKE_VBGM <- nlsList(TL ~ vB_fun(AGE, Linf, K, t0) | LAKE,
-                     start = c(Linf = start_TROUT_VBGM[[1]],
+                     start = c(Linf = start_trout_VBGM[[1]],
                                K = start_TROUT_VBGM[[2]],
                                t0 = start_TROUT_VBGM[[3]]),
                      data = trout,
