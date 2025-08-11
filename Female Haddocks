@@ -10,8 +10,11 @@ library(scam)
 
 ## https://datadryad.org/dataset/doi:10.5061/dryad.vb957
 
-## It can also be automatically imported from this GitHub as follows:
+## It can also be automatically imported as "haddock" from this GitHub as follows:
 
+file_name <- 
+"https://raw.githubusercontent.com/julienmainguy/Modeling-fish-growth/main/haddock.txt"
+haddock <- read.delim(file_name)
 
 
 ## The headtail() function of "FSA" can be used to check the first and last three
