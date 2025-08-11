@@ -31,8 +31,8 @@ vB_fun <- makeGrowthFun(type = "von Bertalanffy")
 
 LAKE_VBGM <- nlsList(TL ~ vB_fun(AGE, Linf, K, t0) | LAKE,
                      start = c(Linf = start_trout_VBGM[[1]],
-                               K = start_TROUT_VBGM[[2]],
-                               t0 = start_TROUT_VBGM[[3]]),
+                               K = start_trout_VBGM[[2]],
+                               t0 = start_trout_VBGM[[3]]),
                      data = trout,
                      na.action = na.omit)
 
@@ -60,12 +60,12 @@ summary(m_trout_VBGM)
 
 ## Model adequacy: checking the normality and homoscedasticity assumptions
 
-resid <- residuals(m_trout_VBGM, level = 0, type = "response")
+resid_tout_VBGM <- residuals(m_trout_VBGM, level = 0, type = "response")
 
 
 ## Normality
 
-shapiro.test(resid)
+shapiro.test(resid_tout_VBGM)
 
 
 ## Homoscedasticity
