@@ -5,7 +5,7 @@ library(nlraa)
 library(performance)
 library(scam)
 
-## NOTE: all the details about the code are mainly presented in the Haddock.R file
+## NOTE: all the details about the code are mainly presented in the Female Haddock R file
 
 ## The *trout* dataset is available on this *Modeling-fish-growth* repository in
 ## a .txt format that can be imported into R with the read.delim() function. It can
