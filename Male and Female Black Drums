@@ -10,7 +10,7 @@ library(scam)
 
 ## The *BlackDrum2001* dataset from "FSAdata" are first imported into R as *bdmf*
 ## and then subsampled to remove a 51-year-old male and 61-year-old female, as
-## performed by Ogle (2016), and then only keep individual of known sex. These
+## performed by Ogle (2016), and then only keep individuals of known sex. These
 ## steps lead to a reduced dataset of 34 females and 74 males.
 
 data(BlackDrum2001) 
