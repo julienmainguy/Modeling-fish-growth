@@ -6,7 +6,7 @@ library(nlstools)
 library(performance)
 library(scam)
 
-## NOTE: all the code details are mainly presented in the Female Haddock R.file
+## NOTE: all the code details are mainly presented in the Female Haddocks R file
 
 ## The *BlackDrum2001* data from "FSAdata" are first imported into R as *bdmf*
 ## and then subsampled to remove a 51-year-old male and 61-year-old female, as
