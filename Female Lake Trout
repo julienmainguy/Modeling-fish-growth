@@ -10,7 +10,7 @@ library(scam)
 ## Automatically load the *trout* dataset in R from Rachel McInerney GitHub:
 
 file_name <- 
-"https://raw.githubusercontent.com/rachel-mc/Ecological-GAMM-examples/main/TROUT.txt"
+"https://raw.githubusercontent.com/julienmainguy/Modeling-fish-growth/main/TROUT.txt"
 trout <- read.delim(file_name)
 
 
