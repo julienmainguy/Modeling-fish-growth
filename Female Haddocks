@@ -10,9 +10,12 @@ library(scam)
 
 ## https://datadryad.org/dataset/doi:10.5061/dryad.vb957
 
-## These data, once imported in R, are referred to below as "haddock". The 
-## headtail() function of "FSA" can be used to check the first and last three
-## lines of this dataset containing 361 individual females 
+## But to facilitate its access, it is also available as a .txt file on this
+## GitHub (haddock.txt). These data, once imported in R, are referred to below
+## as "haddock". 
+
+## The headtail() function of "FSA" can be used to check the first and last three
+## lines of this dataset containing 361 individual females
 
 headtail(haddock)
 
