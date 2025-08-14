@@ -8,8 +8,7 @@ library(scam)
 ## NOTE: all the details about the code are mainly presented in the Female Haddocks R file
 
 ## The *trout* dataset is available on this *Modeling-fish-growth* repository in
-## a .txt format that can be imported into R with the read.delim() function. It can
-## also be automatically imported with the read_delim() function of "readr":
+## a .txt format that can be imported into R with the read.delim() function. 
 
 url <- "https://raw.githubusercontent.com/julienmainguy/Modeling-fish-growth/refs/heads/main/trout.txt"
 trout <- read.delim(url)
