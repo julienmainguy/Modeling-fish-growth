@@ -201,3 +201,20 @@ upper_ci <- exp(fitted$fit + 1.96 * fitted$se.fit)
 
 age <- nd$AGE
 pred_trout_SCAM <- data.frame(age, estimate, lower_ci, upper_ci)
+
+
+## MODEL SELECTION ########################################################
+
+## BIC
+## Because only the conditional (not marginal) BIC is provided by the "scam" package,
+## the conditional BIC of the VBGM was first calculated and then compared to that of
+## the gamma SCAM
+
+
+
+
+
+
+## MSE_adj: improvement from VBGM to SCAM
+
+(MSE_adj_VBGM - MSE_adj_SCAM) / MSE_adj_VBGM * 100
