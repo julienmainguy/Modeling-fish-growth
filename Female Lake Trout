@@ -182,11 +182,6 @@ P <- attributes(logLik)$df
 MSE_adj_SCAM <- RSS / (n - P)
 
 
-## Percentage of improvement (i.e., reduction) in MSE_adj from VBGM to SCAM
-
-(MSE_adj_VBGM - MSE_adj_SCAM) / MSE_adj_VBGM * 100
-
-
 ## Predictions of the gamma SCAM
 
 model <- m_trout_SCAM
@@ -210,9 +205,20 @@ pred_trout_SCAM <- data.frame(age, estimate, lower_ci, upper_ci)
 ## the conditional BIC of the VBGM was first calculated and then compared to that of
 ## the gamma SCAM
 
+model_resid_SE <- m_trout_VBGM$sigma
+n <- nrow(trout)
+logLik <- logLik(m_trout_VBGM)
+P <- attributes(logLik)$df
+
+y_hat <- fitted(m_trout_VBGM)
+cond_logLik <- sum(dnorm(trout$TL, y_hat, model_resid_SE, log = T))
+cond_BIC_trout_VBGM <- (-2 * cond_logLik) + (log(n) * P)
 
 
+## The conditional BIC of m_trout_VBGM is then compared to that of m_TROUT_SCAM as
+## directly obtained from using the BIC() function
 
+BIC(m_trout_SCAM)
 
 
 ## MSE_adj: improvement from VBGM to SCAM
