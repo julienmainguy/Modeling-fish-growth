@@ -252,11 +252,6 @@ P <- attributes(logLik)$df
 MSE_adj_SCAM <- RSS / (n - P)
 
 
-## Percentage of improvement (i.e., reduction) in MSE_adj from VBGM to SCAM
-
-(MSE_adj_VBGM - MSE_adj_SCAM) / MSE_adj_VBGM * 100
-
-
 ## Predictions of the gamma SCAM
 
 model <- m_haddock_SCAM
@@ -270,3 +265,16 @@ upper_ci <- exp(fitted$fit + 1.96 * fitted$se.fit)
  
 age <- nd$Age
 pred_haddock_SCAM <- data.frame(age, estimate, lower_ci, upper_ci)
+
+
+## MODEL SELECTION ########################################################
+
+## BIC
+
+BIC(m_haddock_VBGM, m_haddock_SCAM)
+
+
+## MSE_adj: improvement from VBGM to SCAM
+
+(MSE_adj_VBGM - MSE_adj_SCAM) / MSE_adj_VBGM * 100
+
