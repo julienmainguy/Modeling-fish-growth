@@ -351,6 +351,30 @@ upper_ci <- exp(fitted$fit + 1.96 * fitted$se.fit)
 pred_bdf_SCAM <- data.frame(nd, estimate, lower_ci, upper_ci)
 
 
+## MODEL SELECTION ########################################################
+
+## BIC
+
+## Males
+
+BIC(m_bdm_VBGM, m_bdm_SCAM)
+
+## Females
+
+BIC(m_bdf_VBGM, m_bdf_SCAM)
+
+
+## MSE_adj: improvement from VBGM to SCAM
+
+## Males
+
+(MSE_adj_VBGM_bdm - MSE_adj_SCAM_bdm) / MSE_adj_VBGM_bdm * 100
+
+## Females
+
+(MSE_adj_VBGM_bdf - MSE_adj_SCAM_bdf) / MSE_adj_VBGM_bdf * 100
+
+
 ## COMPARING TWO GROWTH CURVES: MALE AND FEMALE BLACK DRUMS ####################
 
 ## The four candidate models described in Table 1 of the main text will be fitted
@@ -407,18 +431,13 @@ summary(m_bdmf_SCAM_INT)
 
 ## The adequacy of each candidate gamma SCAM was tested with QQ plots as described
 ## above (not shown), with all found to be sufficiently adequate. Model selection
-## according to the Bayesian Information Criterion (BIC) and Bayes Factor (BF), the
-## latter estimated with the test_bf() function of "performance" was then performed.
-## Note that the first listed model with the test_bf() function is used as the 
-## reference level. Note too that the BIC() function does not rank models, but rather
-## present their *equivalent-df* (see main text) and BIC score in the same order 
-## that they were listed. Here, they are listed from simplest to most complex based
-## on their expected required *df* which are not required to be integer-valued
+## according to the Bayesian Information Criterion (BIC). Note that the BIC() function
+## does not rank models, but rather present their *equivalent-df* (see main text) and
+## BIC scores in the same order that they were listed. Here, they are listed from simplest
+## (VBGM) to most complex (SCAM) based on their expected required *df* which are not required
+## to be integer-valued for the latter
 
 BIC(m_bdmf_SCAM_OAO, m_bdmf_SCAM_ADD, m_bdmf_SCAM_COM, m_bdmf_SCAM_INT)
-
-
-test_bf(m_bdmf_SCAM_OAO, m_bdmf_SCAM_ADD, m_bdmf_SCAM_COM, m_bdmf_SCAM_INT)
 
 
 ## Predictions of the candidate gamma SCAM that includes the additive effects of
