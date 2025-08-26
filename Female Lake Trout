@@ -201,11 +201,12 @@ pred_trout_SCAM <- data.frame(age, estimate, lower_ci, upper_ci)
 ## MODEL SELECTION ########################################################
 
 ## BIC
+
 ## Because only the conditional (not marginal) BIC is provided by the "scam" package,
 ## the conditional BIC of the VBGM was first calculated and then compared to that of
 ## the gamma SCAM
 
-model_resid_SE <- m_trout_VBGM$sigma
+model_resid_SD <- m_trout_VBGM$sigma
 n <- nrow(trout)
 logLik <- logLik(m_trout_VBGM)
 P <- attributes(logLik)$df
