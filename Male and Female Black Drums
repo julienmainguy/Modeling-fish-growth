@@ -3,7 +3,6 @@ library(FSAdata)
 library(nlme)
 library(nlraa)
 library(nlstools)
-library(performance)
 library(scam)
 
 ## NOTE: all the code details are mainly presented in the Female Haddocks R file
