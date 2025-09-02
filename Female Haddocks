@@ -6,13 +6,13 @@ library(nlstools)
 library(performance)
 library(scam)
 
-## The female haddock data (Honsey et al. 2017) can be downloaded here:
+## The original female haddock data (Honsey et al. 2017) can be downloaded here:
 
 ## https://datadryad.org/dataset/doi:10.5061/dryad.vb957
 
 ## The *haddock* dataset is also directly available on this *Modeling-fish-growth*
 ## repository in a .txt format that can be automatically imported into R with the
-## with the following url link and the read.delim() function
+## following url link and the read.delim() function
 
 url <- "https://raw.githubusercontent.com/julienmainguy/Modeling-fish-growth/refs/heads/main/haddock.txt"
 haddock <- read.delim(url)
@@ -34,21 +34,21 @@ haddock <- haddock[which(haddock$TotalLength >= 20),]
 Summarize(Age ~ 1, data = haddock)
 
 
-## VON BERTALANFFY GROWTH MODEL (VBGM) #########################################
+## VON BERTALANFFY GROWTH MODEL (vBGM) #########################################
 
 ## Estimate reasonable starting values for Linf, K, and t0, to be used in the 
-## nonlinear regression used for the VBGM with the findGrowthStarts() function of
+## nonlinear regression required for the vBGM with the findGrowthStarts() function of
 ## "FSA". The regression curve based on these starting values in the plot produced
-## should produce a good fit to the length-at-age data, which is the case here
+## should offer a good fit to the length-at-age data, which is the case here
 
 (sv_haddock_VBGM <- findGrowthStarts(TotalLength ~ Age,
-                                   data = haddock,
-                                   type = "von Bertalanffy",
-                                   plot = TRUE))
+                                     data = haddock,
+                                     type = "von Bertalanffy",
+                                     plot = TRUE))
 
 
 ## Define the von Bertalanffy growth function (vB_fun) to be used in the nonlinear
-## regression by using the makeGrowthfun() function of "FSA" with the argument 
+## regression by relying on the makeGrowthfun() function of "FSA" with the argument 
 ## type = "von Bertalanffy")
 
 vB_fun <- makeGrowthFun(type = "von Bertalanffy")
@@ -108,8 +108,8 @@ R2M(m_haddock_VBGM)$R2 * 100
 ## between the observed and predicted lengths for each of the 359 females are
 ## calculated and the corresponding residuals are then squared to calculate the
 ## residual sum of squares (RSS). The RSS is then divided by (n - P), where n is
-## the sample size and P the number of df of the model, as reported with the
-## logLik() function
+## the sample size and P the number of parameter df of the model, as reported 
+## from using the logLik() function
 
 model <- m_haddock_VBGM
 data <- haddock
@@ -132,7 +132,7 @@ MSE_adj_VBGM <- RSS / (n - P)
 
 ## The central tendency (i.e., estimated mean) is first obtained with the predict()
 ## function using new data (nd_haddock) with small age increment units for the
-## production of the related plot of the growth curve.To avoid extrapolation,
+## production of the related plot of the growth curve. To avoid extrapolation,
 ## the predictions are only produced for the range of observed ages in the sample
 
 nd <- data.frame(Age = seq(min(haddock$Age), max(haddock$Age), by = 0.1))
@@ -180,7 +180,7 @@ pred_haddock_VBGM <- data.frame(age, estimate, lower_ci, upper_ci)
 ## also concave (cv), with the specifically-designed P-splines for this being
 ## applied with the argument bs = "micv". A gamma distribution with a log link
 ## was systematically fitted, which does not assume normality nor homoscedasticity,
-## by modeling the variance to be proportional to the mean, thus reflecting the
+## by modeling the variance to be proportional to the mean, thus reflecting an
 ## increasing variation in length with age. The "efs" optimizer is used instead of
 ## the default one, but the latter should produce similar results when only fixed
 ## effects are used
@@ -211,13 +211,13 @@ scam.check(m_haddock_SCAM)
 
 ## QQ plots can be produced with the qq.scam() function to more closely examine
 ## the behaviour of the deviance residuals. Using the argument rep = 5000 will 
-## allow perform 5000 simulations that will then be used to add a confidence band
+## allow to perform 5000 simulations that will be used to add a confidence band
 ## in which most of the residuals should be found for a well-fitting model, here at
 ## at level of confidence of 95% as indicated by the argument level = 0.95. Lastly,
 ## the argument pch = 20 indicate to use a given type of symbol in the QQ plot to
 ## illustrate the residuals
 
-qq.scam(m_haddock_SCAM, rep = 1000, level = 0.95, pch = 20)
+qq.scam(m_haddock_SCAM, rep = 5000, level = 0.95, pch = 20)
 
 
 ## Estimate the in-sample predictive performance with the deviance explained (D2)
@@ -274,7 +274,7 @@ pred_haddock_SCAM <- data.frame(age, estimate, lower_ci, upper_ci)
 BIC(m_haddock_VBGM, m_haddock_SCAM)
 
 
-## MSE_adj: improvement from VBGM to SCAM
+## MSE_adj: improvement from VBGM to SCAM (i.e., percentage of reduction)
 
 (MSE_adj_VBGM - MSE_adj_SCAM) / MSE_adj_VBGM * 100
 
