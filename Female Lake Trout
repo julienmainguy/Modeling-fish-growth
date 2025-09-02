@@ -2,7 +2,6 @@ library(FSA)
 library(MuMIn)
 library(nlme)
 library(nlraa)
-library(performance)
 library(scam)
 
 ## NOTE: all the details about the code are mainly presented in the Female Haddocks R file
