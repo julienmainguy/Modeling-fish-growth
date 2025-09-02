@@ -14,7 +14,7 @@ url <- "https://raw.githubusercontent.com/julienmainguy/Modeling-fish-growth/ref
 trout <- read.delim(url)
 
 
-## VON BERTALANFFY GROWTH MODEL (VBGM) #########################################
+## VON BERTALANFFY GROWTH MODEL (vBGM) #########################################
 
 (start_trout_VBGM <- findGrowthStarts(TL ~ AGE, 
                                       data = trout,
@@ -211,8 +211,9 @@ logLik <- logLik(m_trout_VBGM)
 P <- attributes(logLik)$df
 
 y_hat <- fitted(m_trout_VBGM)
-cond_logLik <- sum(dnorm(trout$TL, y_hat, model_resid_SE, log = T))
+cond_logLik <- sum(dnorm(trout$TL, y_hat, model_resid_SD, log = T))
 cond_BIC_trout_VBGM <- (-2 * cond_logLik) + (log(n) * P)
+cond_BIC_trout_VBGM
 
 
 ## The conditional BIC of m_trout_VBGM is then compared to that of m_TROUT_SCAM as
@@ -221,6 +222,6 @@ cond_BIC_trout_VBGM <- (-2 * cond_logLik) + (log(n) * P)
 BIC(m_trout_SCAM)
 
 
-## MSE_adj: improvement from VBGM to SCAM
+## MSE_adj: improvement from VBGM to SCAM (i.e., percentage reduction in MSE_adj)
 
 (MSE_adj_VBGM - MSE_adj_SCAM) / MSE_adj_VBGM * 100
