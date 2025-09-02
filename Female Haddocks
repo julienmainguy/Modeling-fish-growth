@@ -10,8 +10,8 @@ library(scam)
 ## https://datadryad.org/dataset/doi:10.5061/dryad.vb957
 
 ## A modified *haddock* dataset is also directly available on this *Modeling-fish-growth*
-## repository in a .txt format in which Season = SPRING and Year = 2015, an information common 
-## to all sampled female haddocks, has been removed. This reduced dataset can be automatically
+## repository in a .txt format in which Season = SPRING, Year = 2015, and Sex = 2, an information common 
+## to all sampled female (Sex = 2) haddocks, has been removed. This reduced dataset can be automatically
 ## imported into R with the following url link and the read.delim() function
 
 url <- "https://raw.githubusercontent.com/julienmainguy/Modeling-fish-growth/refs/heads/main/haddock.txt"
