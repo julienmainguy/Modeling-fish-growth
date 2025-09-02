@@ -10,8 +10,8 @@ library(scam)
 
 ## The *BlackDrum2001* dataset from "FSAdata" are first imported into R as *bdmf*
 ## and then subsampled to remove a 51-year-old male and 61-year-old female, as
-## performed by Ogle (2016), and then only keep individuals of known sex. These
-## steps lead to a reduced dataset of 34 females and 74 males.
+## performed by Ogle (2016), to then also only keep individuals of known sex.
+## These steps lead to a reduced dataset of 34 females and 74 males.
 
 data(BlackDrum2001) 
 bdmf <- BlackDrum2001
@@ -24,7 +24,7 @@ Summarize(otoage ~ sex, data = bdmf)
 ## VON BERTALANFFY GROWTH MODEL (VBGM) #########################################
 
 ## Both sexes will be analyzed separately in a first time to describe their
-## growth, either with the VBGM or alternative SCAM approach
+## growth, either with the vBGM or alternative SCAM approach
 
 bdm <- bdmf[which(bdmf$sex == "male"),]
 bdf <- bdmf[which(bdmf$sex == "female"),]
@@ -42,13 +42,13 @@ bdf <- bdmf[which(bdmf$sex == "female"),]
                                  plot=TRUE))
 
 
-## Define the VBGM function
+## Define the vBGM function
 
 vB_fun <- makeGrowthFun(type = "von Bertalanffy")
 
 
-## Fit the VBGM in a nonlinear regression using the vB_fun() function and the
-## starting values for Linf, K, and t0 from above
+## Fit sex-specific vBGMs in a nonlinear regression using the vB_fun() function 
+## and the starting values for Linf, K, and t0 for each sex as obtained above
 
 m_bdm_VBGM <- nls(tl ~ vB_fun(otoage, Linf, K, t0),
                   data = bdm, 
@@ -66,7 +66,7 @@ summary(m_bdm_VBGM, correlation = TRUE)
 summary(m_bdf_VBGM, correlation = TRUE)
 
 
-## Check VBGM adequacy for male black drums based on residuals
+## Check vBGM adequacy for male black drums by examining residuals
 
 resid_bdm_VBGM <- nlsResiduals(m_bdm_VBGM)
 
@@ -91,7 +91,7 @@ test.nlsResiduals(resid_bdm_VBGM)$alternative
 plot(resid_bdm_VBGM, which = 2)
 
 
-## Check VBGM adequacy for female black drums based on residuals
+## Check VBGM adequacy for female black drums by examining residuals
 
 resid_bdf_VBGM <- nlsResiduals(m_bdf_VBGM)
 
@@ -124,9 +124,9 @@ R2M(m_bdm_VBGM)$R2 * 100
 R2M(m_bdf_VBGM)$R2 * 100
 
 
-## Mean Square Error (MSE_adj) of the VBGM for male black drums
+## Adjusted Mean Square Error (MSE_adj)
 
-## males
+## Males
 
 model <- m_bdm_VBGM
 data <- bdm
@@ -145,7 +145,7 @@ P <- attributes(logLik)$df
 MSE_adj_VBGM_bdm <- RSS / (n - P)
 
 
-## females
+## Females
 
 model <- m_bdf_VBGM
 data <- bdf
@@ -164,9 +164,9 @@ P <- attributes(logLik)$df
 MSE_adj_VBGM_bdf <- RSS / (n - P)
 
 
-## Predictions of the VBGM
+## Predictions of the vBGM
 
-## males
+## Males
 
 model <- m_bdm_VBGM 
 nd <- data.frame(otoage = seq(min(bdm$otoage), max(bdm$otoage), by = 0.1))
@@ -183,13 +183,13 @@ CI_VBGM <- data.frame(predict(boot_VBGM,
                               t = seq(min(bdm$otoage),
                                       max(bdm$otoage), 
                                       by = 0.1)))
-
 lower_ci <- CI_VBGM$X95..LCI
 upper_ci <- CI_VBGM$X95..UCI
 
 pred_bdm_VBGM <- data.frame(age, estimate, lower_ci, upper_ci)
 
-## females
+
+## Females
 
 model <- m_bdf_VBGM 
 nd <- data.frame(otoage = seq(min(bdf$otoage), max(bdf$otoage), by = 0.1))
@@ -206,16 +206,15 @@ CI_VBGM <- data.frame(predict(boot_VBGM,
                               t = seq(min(bdf$otoage),
                                       max(bdf$otoage), 
                                       by = 0.1)))
-
 lower_ci <- CI_VBGM$X95..LCI
 upper_ci <- CI_VBGM$X95..UCI
 
 pred_bdf_VBGM <- data.frame(age, estimate, lower_ci, upper_ci)
 
 
-## SHAPE CONSTRAINED ADDITIVE MODEL (SCAM) #####################################
+## SHAPE-CONSTRAINED ADDITIVE MODEL (SCAM) #####################################
 
-## males
+## Males
 
 m_bdm_SCAM <- scam(tl ~ s(otoage, bs = "micv"),
                    family = Gamma(link = "log"),
@@ -224,7 +223,8 @@ m_bdm_SCAM <- scam(tl ~ s(otoage, bs = "micv"),
 
 summary(m_bdm_SCAM)
 
-## females
+
+## Females
 
 m_bdf_SCAM <- scam(tl ~ s(otoage, bs = "micv"),
                    family = Gamma(link = "log"),
@@ -253,6 +253,7 @@ n <- summary(model)$n
 D2_adj <- 100 - ((n - 1) / (n - P) * (100 - D2))
 cbind(D2, D2_adj)
 
+
 model <- m_bdf_SCAM
 
 D2 <- 100 * (1 - model$deviance / model$null.deviance)
@@ -265,7 +266,7 @@ cbind(D2, D2_adj)
 
 ## Calculate the MSE_adj of the gamma SCAM
 
-## males
+## Males
 
 model <- m_bdm_SCAM
 data <- bdm
@@ -284,7 +285,7 @@ P <- attributes(logLik)$df
 MSE_adj_SCAM_bdm <- RSS / (n - P)
 
 
-## females
+## Females
 
 model <- m_bdf_SCAM
 data <- bdf
@@ -303,19 +304,9 @@ P <- attributes(logLik)$df
 MSE_adj_SCAM_bdf <- RSS / (n - P)
 
 
-## Percentage of improvement (i.e., reduction) in MSE_adj from VBGM to SCAM
+## Predictions of the gamma SCAM
 
-## males
-
-(MSE_adj_VBGM_bdm - MSE_adj_SCAM_bdm) / MSE_adj_VBGM_bdm * 100
-
-
-## females
-
-(MSE_adj_VBGM_bdf - MSE_adj_SCAM_bdf) / MSE_adj_VBGM_bdf * 100
-
-
-## Predictions of the gamma SCAM for male black drums
+## Males
 
 model <- m_bdm_SCAM
 
@@ -333,7 +324,7 @@ upper_ci <- exp(fitted$fit + 1.96 * fitted$se.fit)
 pred_bdm_SCAM <- data.frame(nd, estimate, lower_ci, upper_ci)
 
 
-## Predictions of the gamma SCAM for female black drums
+## Females
 
 model <- m_bdf_SCAM
 
@@ -359,16 +350,18 @@ pred_bdf_SCAM <- data.frame(nd, estimate, lower_ci, upper_ci)
 
 BIC(m_bdm_VBGM, m_bdm_SCAM)
 
+
 ## Females
 
 BIC(m_bdf_VBGM, m_bdf_SCAM)
 
 
-## MSE_adj: improvement from VBGM to SCAM
+## MSE_adj: improvement from VBGM to SCAM (i.e., percentage of reduction)
 
 ## Males
 
 (MSE_adj_VBGM_bdm - MSE_adj_SCAM_bdm) / MSE_adj_VBGM_bdm * 100
+
 
 ## Females
 
@@ -380,7 +373,7 @@ BIC(m_bdf_VBGM, m_bdf_SCAM)
 ## The four candidate models described in Table 1 of the main text will be fitted
 ## below. As for "mgcv" when fitting GAMs, "scam" requires that categorical variables
 ## are first identified as such when included as predictors, either as fixed or
-## random effects.
+## random effects
 
 bdmf$sex <- as.factor(bdmf$sex)
 
@@ -418,7 +411,7 @@ m_bdmf_SCAM_ADD <- scam(tl ~ sex + s(otoage, bs = "micv"),
 summary(m_bdmf_SCAM_ADD)
 
 
-## candidate model with the multiplicative effects of otoage and sex (intersecting growth curves)
+## candidate model with the multiplicative effects of otoage and sex
 ## _INT: INTeraction between otoage and sex
 
 m_bdmf_SCAM_INT <- scam(tl ~ sex + s(otoage, by = sex, bs = "micv"),
@@ -429,30 +422,25 @@ m_bdmf_SCAM_INT <- scam(tl ~ sex + s(otoage, by = sex, bs = "micv"),
 summary(m_bdmf_SCAM_INT)
 
 
-## The adequacy of each candidate gamma SCAM was tested with QQ plots as described
+## The adequacy of each candidate gamma SCAM was tested with QQ plots, as described
 ## above (not shown), with all found to be sufficiently adequate. Model selection
-## according to the Bayesian Information Criterion (BIC). Note that the BIC() function
-## does not rank models, but rather present their *equivalent-df* (see main text) and
-## BIC scores in the same order that they were listed. Here, they are listed from simplest
-## (VBGM) to most complex (SCAM) based on their expected required *df* which are not required
-## to be integer-valued for the latter
+## according to the Bayesian Information Criterion (BIC) is performed below. Note that the
+## BIC() function does not rank models, but rather present their *equivalent-df* (see main text)
+## and corresponding BIC scores in the same order that they were listed. Here, they are listed
+## from the simplest (OAO) to most complex (INT) based on their expected required *df* which are
+## not required to be integer-valued for the latter (i.e., combination of df and edf, see text)
 
 BIC(m_bdmf_SCAM_OAO, m_bdmf_SCAM_ADD, m_bdmf_SCAM_COM, m_bdmf_SCAM_INT)
 
 
 ## Predictions of the candidate gamma SCAM that includes the additive effects of
-## otoage and sex, which was identified as the top-ranking model based on BIC and also
-## given that, relatively to the other two more complex gamma SCAMs (COM and INT),
-## ADD is the one that is the more likely relatively to the simplest OAO model
-## according to the Bayes Factor (see Table 1). Below, the range of observed ages
-## by sex is used to avoid extrapolation for the predicted values presented in
-## Fig. 2c
+## otoage and sex (ADD), which was identified as the top-ranking model based on BIC. 
+## Below, the range of observed ages by sex is used to avoid extrapolation for
+## the predicted values presented in Fig. 2c
 
-nd_bdm <- data.frame(otoage = seq(min(bdm$otoage), max(bdm$otoage), by = 0.1),
-                     sex = "male")
+nd_bdm <- data.frame(otoage = seq(min(bdm$otoage), max(bdm$otoage), by = 0.1), sex = "male")
 
-nd_bdf <- data.frame(otoage = seq(min(bdf$otoage), max(bdf$otoage), by = 0.1),
-                     sex = "female")
+nd_bdf <- data.frame(otoage = seq(min(bdf$otoage), max(bdf$otoage), by = 0.1), sex = "female")
 
 nd <- rbind(nd_bdm, nd_bdf)
 
