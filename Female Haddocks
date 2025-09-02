@@ -3,7 +3,6 @@ library(hnp)
 library(nlme)
 library(nlraa)
 library(nlstools)
-library(performance)
 library(scam)
 
 ## The original female haddock data (Honsey et al. 2017) can be downloaded here:
