@@ -1,5 +1,4 @@
 library(FSA)
-library(hnp)
 library(nlme)
 library(nlraa)
 library(nlstools)
