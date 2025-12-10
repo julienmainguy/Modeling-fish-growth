@@ -150,7 +150,7 @@ scam.check(m_trout_SCAM)
 qq.scam(m_trout_SCAM, rep = 5000, level = 0.95, pch = 20)
 
 
-## Estimated in-sampled predictive performance
+## Estimated in-sample predictive performance
 
 model <- m_trout_SCAM
 
