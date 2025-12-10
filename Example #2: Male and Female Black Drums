@@ -19,14 +19,14 @@ bdmf <- bdmf[which(bdmf$sex == "male" | bdmf$sex == "female"),]
 
 Summarize(otoage ~ sex, data = bdmf)
 
-
-## VON BERTALANFFY GROWTH MODEL (VBGM) #########################################
-
 ## Both sexes will be analyzed separately in a first time to describe their
 ## growth, either with the vBGM or alternative SCAM approach
 
 bdm <- bdmf[which(bdmf$sex == "male"),]
 bdf <- bdmf[which(bdmf$sex == "female"),]
+
+
+## VON BERTALANFFY GROWTH MODEL (VBGM) #########################################
 
 ## Find reasonable starting values
 
