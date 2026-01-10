@@ -70,8 +70,12 @@ Summarize(Age ~ 1, data = haddock)
 
 
 ## In the other 17 examples, the removal of NA's needed to be performed prior to analyze the length-at-age data, such as in the
+## RuffeSLRH92 data with n = 738 sampled fish of which only 12 had their age identified, as indicated from using the Summarize()
+## function of FSA, sucht that all the sampled fish with NA's for the variable age only were removed.
+
+Summarize(age ~ 1, data = RuffeSLRH92)
+RuffeSLRH92 <- RuffeSLRH92[!is.na(RuffeSLRH92$age),]
+Summarize(age ~ 1, data = RuffeSLRH92)
 
 
-
-## fonction pour enlever les NA mais pour une variable (AGE ou TL) seulement!!!!!!!!!!!!!!!!!!!!!
 
