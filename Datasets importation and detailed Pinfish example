@@ -13,17 +13,31 @@ library(scam)
 
 ## Example 1: pinfish (Nelson 2002)
 
-## The original pinfish dataset has 670 sampled males and females, as can be seen from using the headtail() function
-## of "FSA" which shows the first and last three lines of this dataset:
+## The original pinfish dataset, the only linked to the "fishmethod" package (Nelson 2025), has 670 sampled males 
+## and females, as can be confirmed from using the headtail() function of the "FSA" package which shows the first
+## and last three lines of this dataset.
 
 headtail(pinfish)
 
-## As indicated in Nelson (2002) and the Fig. 2
+
+## As indicated in Nelson (2002) and the related Fig. 4B presented in this study, both sexes were combined and with the
+## analyses only conducted for pinfish exhibiting a standard length (sl) of 66 mm and greater, up to the maximum of 255 mm.
+## The pinfish dataset was thus first reduced by excluding small individual fish with sl < 66 mm.
 
 pinfish <- pinfish[which(pinfish$sl > 65),]
 
 
+## The descriptive statistics of this reduced dataset, as obtained with the Summarize() function of "FSA", now indicate that
+## n = 665 pinfish exhibiting an sl varying between 66 and 255 mm are considered. Note that Nelson (2002) reports using n = 658
+## pinfish in his analyses, such that 7 additional individual fish were considered here.
+
 Summarize(sl ~ 1, data = pinfish)
+
+
+## Example 2: male black drum (Ogle 2016)
+
+## This example is used in the excellent fisheries-related textbook of Ogle (2016, Chapter 12) to show the detailed application
+## of the von Bertalanffy growth model (VBGM) in which only the males from the BlackDrum2001 dataset found in "FSAdata" are used.
 
 
 
