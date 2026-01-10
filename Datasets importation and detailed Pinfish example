@@ -71,11 +71,181 @@ Summarize(Age ~ 1, data = haddock)
 
 ## In the other 17 examples, the removal of NA's needed to be performed prior to analyze the length-at-age data, such as in the
 ## RuffeSLRH92 data with n = 738 sampled fish of which only 12 had their age identified, as indicated from using the Summarize()
-## function of FSA, sucht that all the sampled fish with NA's for the variable age only were removed.
+## function of FSA, such that all the sampled fish with NA's for the variable age were removed.
 
 Summarize(age ~ 1, data = RuffeSLRH92)
 RuffeSLRH92 <- RuffeSLRH92[!is.na(RuffeSLRH92$age),]
 Summarize(age ~ 1, data = RuffeSLRH92)
 
+
+################################################### DATA ANALYSES ##################################################################
+
+## As the approach is identical for all datasets, the analysis of the first example for the 665 pinfish (Nelson 2002) is shown below.
+
+## Application of the VBGM, with the Gompertz and logistic growth models following the same approach. First, the von Bertalanffy growth
+## function, i.e. VB_fun(), is defined, as for the Gompertz and logistic ones (i.e., GGM and LGM, respectively).
+
+VB_fun <- makeGrowthFun(type = "von Bertalanffy")
+GZ_fun <- makeGrowthFun(type = "Gompertz")
+LG_fun <- makeGrowthFun(type = "logistic")
+
+
+## Starting values for the VBGM are first estimated and stored in the object "sv_pinfish_VB", with the same step identically achieved for
+## the GGM and LGM (not shown).
+
+sv_pinfish_VB <- findGrowthStarts(sl ~ age, 
+                                  type = "von Bertalanffy",
+                                  plot = TRUE,
+                                  data = pinfish)
+
+summary(m_pinfish_VB <- nls(
+sl ~ VB_fun(age, Linf, K, t0), start = sv_pinfish_VB, data = pinfish))
+summary(m_pinfish_VB, correlation = TRUE)
+
+
+## Obtain the final VBGM from jointly using the VB_fun() function and estimated starting values (i.e., sv_pinfish_VB)
+
+m_pinfish_VB <- nls(sl ~ VB_fun(age, Linf, K, t0),
+                    start = sv_pinfish_VB, 
+                    data = pinfish)
+
+
+## Yield the summary output and ask for the correlation coefficient between the three growth parameters as provided by the "nlstools" package.
+## Note the extremely high values of the correlation coefficients, especially betweeen Linf and K, but also K and t0. 
+
+summary(m_pinfish_VB, correlation = TRUE)
+
+
+## Check the adequacy of m_pinfish_VB with newly-available helper functions for the hnp package. A general Growth Function (GF) must first be created
+## and is identically used for the VBGM, GGM, and LGM, but first, the model, growth function and dataset being used are defined for their use with the
+## associated code. Note that all the code rely on the information provided for model, growth_fun, and dataset. If the variable "age" is spelled otherwise,
+## it has to be changed too in the code (see lines 142, 155, and 162, since R is case-sensitive).
+
+model <- m_pinfish_VB
+growth_fun <- VB_fun
+dataset <- pinfish
+
+GF <- function(formula, start, data) {
+               y <- data[[paste(formula[[2]])]]
+                          fit <- nls(formula = formula,
+                                     start = start,
+                                     data = data)
+            res <- y - as.numeric(fitted(fit))
+            return(list(fit = fit, residuals = res))
+}
+
+
+## The original growht model being assessed for its adequacy, here m_pinfish_VB, is then recreated and fitted as the *original_model* with the
+## just-created GF() function and making use of the specific funtion of the considered growth model, i.e. VB_fun(), that was first defined above,
+## but this step is used to create the residuals of the model of interest.
+
+original_model <- GF(sl ~ VB_fun(age, Linf, K, t0), 
+                     start = sv_pinfish_VB,
+                     data = dataset)
+
+
+## Then, the helper functions dfun(), sfun(), and ffun() are defined to be used with the hnp() function of the "hnp" package.
+## The dfun() function remains the same at all times, whereas the sfun() and ffun() functions must only be modified for its *mu* object by using the correct function, here VB_fun(). 
+## The 
+
+dfun <- function(obj) obj$residuals
+
+sfun <- function(n, obj) {
+  theta <- coef(obj$fit)
+  mu <- growth_fun(dataset$age, theta[1], theta[2], theta[3])
+  sigma <- sigma(obj$fit)
+  y <- rnorm(length(mu), mu, sigma)
+  return(y)
+}
+
+ffun <- function(newresp) {
+  fit <- GF(newresp ~ growth_fun(age, Linf, K, t0), 
+              start = sv_pinfish_VB,
+              data = dataset %>% mutate(newresp = newresp))
+  return(fit)
+}
+
+
+## Adequacy assessment based on a signale diagnostic iteration with "hnp".
+
+hnp(original_model,
+    newclass = TRUE,
+    diagfun = dfun,
+    simfun = sfun,
+    fitfun = ffun,
+    how.many.out = TRUE,
+    paint = TRUE,
+    print = TRUE)
+
+
+## Adequacy assessment based on 10 diagnostic iterations with "hnp". The seed *2025* is solely used for result reproducibility.
+
+set.seed(2025)
+n <- 10
+hnp_obj <- list()
+for(i in 1:n) {
+  hnp_obj[[i]] <- hnp(original_model,
+                   newclass = TRUE,
+                   diagfun = dfun,
+                   simfun = sfun,
+                   fitfun = ffun,
+                   how.many.out = TRUE,
+                   plot.sim = FALSE)
+}
+
+hnp_summary <- sapply(hnp_obj, function(x) x$out / x$total * 100) 
+
+## Estimate the model percentage of residuals found outside the simulated envelope.
+
+return_max <- function(numvec) {
+  dens <- density(numvec)
+  return(dens$x[which.max(dens$y)][1])
+}
+round(return_max(hnp_summary), 2)
+
+
+## Estimate the (unadjusted) in-sample predictive performance with the R2M() function of the "nlraa" package.
+
+R2M(m_pinfish_VB)$R2 * 100
+
+
+## Calculate the adjusted root mean square error (RMSE_adj)
+
+n <- length(pinfish$age)
+logLik <- logLik(m_pinfish_VB)
+P <- attributes(logLik)$df
+prediction <- predict(m_pinfish_VB, pinfish, type = "response")
+RSS <- sum((prediction-pinfish$sl)^2)
+(RMSE_adj <- sqrt(RSS/(n - P)))
+
+
+## Leave-one-out cross-validation with one-standard-error rule based on the mean RMSE
+## Note that because this dataset is large (n = 665), this process takes about one minute to be completed.
+
+n <- length(pinfish$age) ## as defined in the previous step above
+RMSE <- numeric(n)
+
+for (i in 1:n) {
+  train <- pinfish[-i, ]                                                                             # Leave out the i-th observation to create the "train" dataset
+  test <- pinfish[i, ]                                                                               # Keep the i-th observation as the "test" dataset (n = 1) 
+  sv_pinfish_VB <- findGrowthStarts(sl ~ age, type = "von Bertalanffy", plot = TRUE, data = train)   # Estimate the starting values based on the "train" dataset
+  model <- nls(sl ~ VB_fun(age, Linf, K, t0), start = sv_pinfish_VB, data = train)                   # Estimate the three growth parameters for the final VBGM based on the "train" dataset
+  prediction <- predict(model, newdata = test, type = "response")                                    # Yield the related predicted value for the single observation contained in the "test" dataset
+  RMSE[i] <- sqrt(mean((prediction-test$sl)^2))                                                      # Calculate the RMSE
+}
+
+results_pinfish_VB <- data.frame(METHOD = "VB", RMSE)                                                # Store all the RMSE values in a same data.frame
+
+Summarize(RMSE ~ 1, data = results_pinfish_VB)                                                       # Obtain the descriptive statistics, including the mean RMSE from this leave-one-out cross-validation approach
+
+(sd(results_pinfish_VB$RMSE)/sqrt(n))                                                                # Calculate the estimated standard error (SE)
+
+logLik<-logLik(m_pinfish_VB)              
+(attributes(logLik)$df)                                                                              # Obtain the parameter degrees of freedom (d.f.) or P, which systematically has d.f. = 4 for the VBGM, GGM, and LGM
+
+
+## Compare the Bayesian Information Criterion (BIC) scores between the three models
+
+BIC(m_pinfish_VB, m_pinfish_GZ, m_pinfish_LG)
 
 
