@@ -1,1 +1,46 @@
+library(fishmethods)
+library(FSA)
+library(FSAdata)
+library(nlraa)
+library(nlstools)
+library(scam)
+
+## The importation of any but one of the 21 publicly-available datasets presented in Table 1 of the main text
+## can be directly achieved once the "fishmethod" and "FSAdata" packages have been activated in R. Note that
+## additional steps to remove some sampled fish may be required, which is the case for the three detailed examples
+## presented in the main text (1) pinfish, (2) male black drums, and (3) female haddocks. Given that these three
+## datasets are presented in more details, here are the additional code that were applied applied:
+
+## Example 1: pinfish (Nelson 2002)
+
+## The original pinfish dataset has 670 sampled males and females, as can be seen from using the headtail() function
+## of "FSA" which shows the first and last three lines of this dataset:
+
+headtail(pinfish)
+
+## As indicated in Nelson (2002) and the Fig. 2
+
+pinfish <- pinfish[which(pinfish$sl > 65),]
+
+
+Summarize(sl ~ 1, data = pinfish)
+
+
+
+##For the third example about female haddocks regarding the
+## modeling of biphasic growth (Honsey et al. 2017), the original data can be downloaded from Dryad at:
+
+## https://datadryad.org/dataset/doi:10.5061/dryad.vb957
+
+## To facilitate the importation of this dataset into R, the same dataset has been made available here in a .txt 
+## format in which *Season = SPRING*, *Year = 2015*, and *Sex = 2* (i.e., female), which corresponds to an information
+## that is common to all sampled female haddocks, has been removed. This reduced dataset can be automatically
+## imported into R from using the following url link and the read.delim() function
+
+url <- "https://raw.githubusercontent.com/julienmainguy/Modeling-fish-growth/refs/heads/main/haddock.txt"
+haddock <- read.delim(url)
+
+
+## Step-by-step analysis of the pinfish example (Nelson 2002)
+
 
