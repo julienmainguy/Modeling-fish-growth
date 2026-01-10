@@ -166,7 +166,10 @@ ffun <- function(newresp) {
 }
 
 
-## Adequacy assessment based on a signale diagnostic iteration with "hnp".
+## Adequacy assessment based on a signale diagnostic iteration with "hnp". A half-normal plot with a simulated envelope is produced.
+## Because of the simulations being used, each requested iterations will produce results that slightly vary. The paint=TRUE argument
+## is used such the residuals found outside the envelope are shown in red, whereas the print = TRUE argument display the number and
+## percentage of residuals found outside the envelope directly on the half-normal plot.
 
 hnp(original_model,
     newclass = TRUE,
@@ -194,6 +197,7 @@ for(i in 1:n) {
 }
 
 hnp_summary <- sapply(hnp_obj, function(x) x$out / x$total * 100) 
+
 
 ## Estimate the model percentage of residuals found outside the simulated envelope.
 
