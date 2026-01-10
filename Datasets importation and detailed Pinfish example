@@ -34,27 +34,44 @@ pinfish <- pinfish[which(pinfish$sl > 65),]
 Summarize(sl ~ 1, data = pinfish)
 
 
-## Example 2: male black drum (Ogle 2016)
+## Example 2: male black drums (Ogle 2016)
 
-## This example is used in the excellent fisheries-related textbook of Ogle (2016, Chapter 12) to show the detailed application
-## of the von Bertalanffy growth model (VBGM) in which only the males from the BlackDrum2001 dataset found in "FSAdata" are used.
+## This example is originally used in the excellent fisheries-related textbook of Ogle (2016, Chapter 12) to show the detailed
+## application of the von Bertalanffy growth model (VBGM) in which only the males from the BlackDrum2001 dataset found in "FSAdata"
+## are used. As a first step only the males are kept and, as done by Ogle (2016), a 51-year-old (oldest) male is also removed,
+## leaving a total of 74 males aged between 3 and 42 years old. To be consistent with Ogle (2016), the reduced data is referred to
+## as "bdm" for black drum males.
+
+bdm <- BlackDrum2001 [which(BlackDrum2001$sex == "male"),]
+bdm <- bdm[which(bdm$otoage < 51),]
+Summarize(otoage ~ 1, data = bdm)
 
 
+## Example 3: female haddocks (Honsey et al. 2017)
 
-##For the third example about female haddocks regarding the
-## modeling of biphasic growth (Honsey et al. 2017), the original data can be downloaded from Dryad at:
-
-## https://datadryad.org/dataset/doi:10.5061/dryad.vb957
-
-## To facilitate the importation of this dataset into R, the same dataset has been made available here in a .txt 
-## format in which *Season = SPRING*, *Year = 2015*, and *Sex = 2* (i.e., female), which corresponds to an information
-## that is common to all sampled female haddocks, has been removed. This reduced dataset can be automatically
-## imported into R from using the following url link and the read.delim() function
+## This is the only dataset that needs to be first downloaded from Dryad: https://datadryad.org/dataset/doi:10.5061/dryad.vb957
+## But to facilitate the importation of this dataset into R, the same dataset has been made available here in a .txt format
+## in which *Season = SPRING*, *Year = 2015*, and *Sex = 2* (i.e., female), corresponding to an information that is common to all
+## sampled female haddocks, has been removed. This modified dataset can be automatically imported into R from using the following
+## url link together with the read.delim() function.
 
 url <- "https://raw.githubusercontent.com/julienmainguy/Modeling-fish-growth/refs/heads/main/haddock.txt"
 haddock <- read.delim(url)
 
 
-## Step-by-step analysis of the pinfish example (Nelson 2002)
+## However, and as done in the two previous examples, this dataset was further reduced by Honsey et al. (2017) by discarding the 
+## two smallest females despite the fact that these two observations did not appear to act as outliers, but could have had a
+## leverage on the linear relationship describing the first phase of the biphasic growth model and could thus possibly having been
+## removed for such reason. Regardless of the reason behind their removal, the original dataset was reduced to n = 359 by containing
+## haddock females exhibiting a total lenght (tl) of 20 cm or more.
 
+haddock <- haddock[which(haddock$TotalLength >= 20),]
+Summarize(Age ~ 1, data = haddock)
+
+
+## In the other 17 examples, the removal of NA's needed to be performed prior to analyze the length-at-age data, such as in the
+
+
+
+## fonction pour enlever les NA mais pour une variable (AGE ou TL) seulement!!!!!!!!!!!!!!!!!!!!!
 
