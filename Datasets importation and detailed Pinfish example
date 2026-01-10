@@ -1,9 +1,11 @@
 library(fishmethods)
 library(FSA)
 library(FSAdata)
+library(hnp)
 library(nlraa)
 library(nlstools)
 library(scam)
+library(tidyverse)
 
 ## The importation of any but one of the 21 publicly-available datasets presented in Table 1 of the main text
 ## can be directly achieved once the "fishmethod" and "FSAdata" packages have been activated in R. Note that
@@ -78,9 +80,11 @@ RuffeSLRH92 <- RuffeSLRH92[!is.na(RuffeSLRH92$age),]
 Summarize(age ~ 1, data = RuffeSLRH92)
 
 
-################################################### DATA ANALYSES ##################################################################
+## As the overall analytical approach is identical for all datasets, the analysis of the first example for the 665 pinfish (Nelson 2002)
+## is shown below.
 
-## As the approach is identical for all datasets, the analysis of the first example for the 665 pinfish (Nelson 2002) is shown below.
+
+############################## COMMONLY-USED GROWTH MODELS (VON BERTALANFFY, GOMPERTZ, AND LOGISTIC) #########################################
 
 ## Application of the VBGM, with the Gompertz and logistic growth models following the same approach. First, the von Bertalanffy growth
 ## function, i.e. VB_fun(), is defined, as for the Gompertz and logistic ones (i.e., GGM and LGM, respectively).
@@ -252,4 +256,24 @@ logLik<-logLik(m_pinfish_VB)
 
 BIC(m_pinfish_VB, m_pinfish_GZ, m_pinfish_LG)
 
+
+
+
+
+
+
+
+
+
+
+############################## SHAPE-CONSTRAINED ADDITIVE MODELING (SCAM) FRAMEWORK ###########################################
+
+## Gaussian distribution with identity link
+
+m_pinfish_SCAM_GAUSSIAN <- scam(sl ~ s(age, bs = "micv"),
+                                family = gaussian,
+                                optimizer = "efs",
+                                data = pinfish))
+
+summary(m_pinfish_SCAM_GAUSSIAN)
 
