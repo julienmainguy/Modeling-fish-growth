@@ -261,17 +261,18 @@ BIC(m_pinfish_VB, m_pinfish_GZ, m_pinfish_LG)
 
 ## PREDICTED VALUES
 
-nd <- data.frame(age = seq(min(pinfish$age), max(pinfish$age), by = 0.02))              ## select an incremental value allowing to offer a smoothed curve
+nd <- data.frame(age = seq(min(pinfish$age), max(pinfish$age), by = 0.02))                           # select an incremental value allowing to offer a smoothed curve
 estimate <- predict(m_pinfish_VB, nd, type = "response")
 results <- data.frame(nd, estimate)
 
-plot(sl ~ age, data = pinfish)                                                          ## simple plot showing the observed values
-points(estimate ~ age, data = results, pch = 20, type = "b", lwd = 1.5, col = "red")    ## adding the predicted values to assess their fit to the length-at-age data
+plot(sl ~ age, data = pinfish)                                                                       # simple plot showing the observed values
+points(estimate ~ age, data = results, pch = 20, type = "b", lwd = 1.5, col = "red")                 # adding the predicted values to assess their fit to the length-at-age data
 
 
 ############################## SHAPE-CONSTRAINED ADDITIVE MODELING (SCAM) FRAMEWORK ###########################################
 
-## the smooth function s() applied to *age* below imposes through *bs = "micv"* a monotically (m) increasing (i) and convave (cv) curvilinear pattern
+## The smooth function s() applied to *age* below imposes through *bs = "micv"* a monotically (m) increasing (i) and convave (cv) 
+## curvilinear pattern.
 
 ## Gaussian distribution with identity link
 
@@ -397,6 +398,29 @@ return_max <- function(numvec) {
 round(return_max(hnp_summary), 2)
 
 
+## MODEL IN-SAMPLE PREDICTIVE PERFORMANCE
+
+## The (unadjusted) coefficient of determination (R2) for a Gaussian SCAM or the (unadjusted) deviance explained (D2) for a gamma SCAM
+## are directly provided in the scam() function output under "Deviance explained" (see Main Text). Briefly, D2 is the R2 analogue for
+## non-Gaussian models (Guisan and Zimmermann 2000), such as for the gamma SCAM and is estimated as follows:
+
+model <- m_pinfish_SCAM_GAMMA
+(D2 <- 100 * (1 - model$deviance / model$null.deviance))
+
+
+## Note that the adjusted R2 provided in the scam() function output (i.e.,*R-sq.(adj)*) is only valid for the Gaussiance case (see the summary
+## for the gamma SCAM as a proof of that where the estimated R2 actually has a lower value than R2_adj). If one needs to penalize D2 for model 
+## complexity to yield an adjusted D2 (D2_adj), the proposed adjustement by Guisan and Zimmermann (2000) should be used, as presented in Mainguy 
+## et al. (2026) for GAMs, and which first requires the calculation of D2 as just shown above (yielding D2_adj < D2, as it should):
+
+model <- m_pinfish_SCAM_GAMMA
+D2 <- 100 * (1 - model$deviance / model$null.deviance)
+logLik <- logLik(model)
+P <- attributes(logLik)$df
+n <- summary(model)$n
+(D2_adj <- 100 - ((n - 1) / (n - P) * (100 - D2)))
+
+
 ## RMSE_adj, LOO-CV with 1SE rule, and BIC
 
 ## The three different approaches used to compare the penalized goodness-of-fit of the up to five candidate growth models
@@ -409,7 +433,7 @@ round(return_max(hnp_summary), 2)
 ## As such, P for the RMSE_adj and the last part of the code for the LOO-CV and 1SE rule will provide the value reflecting the
 ## complexity of the considered SCAM, which is often > 4 (i.e., the fixed value of the VBGM) but also sometimes < 4.
 
-## RMSE_adj of the Gaussian SCAM
+## RMSE_adj (Gaussian SCAM)
 
 n <- nrow(pinfish)
 logLik <- logLik(m_pinfish_SCAM_GAUSSIAN)
@@ -425,7 +449,7 @@ n <- length(pinfish$age)
 RMSE <- numeric(n)
 
 for (i in 1:n) {
-  train <- pinfish[-i, ] # Leave out the i-th observation
+  train <- pinfish[-i, ]
   test <- pinfish[i, ]
   model <- scam(
   sl ~ s(age, bs = "micv"), family = gaussian, optimizer = "efs", data = train)
@@ -441,7 +465,9 @@ Summarize(RMSE ~ 1, data = results_pinfish_SCAM_GAUSSIAN)
 logLik<-logLik(m_pinfish_SCAM_GAUSSIAN)
 (attributes(logLik)$df)
 
+## BIC
 
+BIC(m_pinfish_SCAM_GAUSSIAN, m_pinfish_SCAM_GAMMA)
 
 
 ## PREDICTED VALUES
@@ -453,6 +479,3 @@ logLik<-logLik(m_pinfish_SCAM_GAUSSIAN)
 
 visreg(m_pinfish_SCAM_GAUSSIAN, scale = "response", rug = FALSE, ylim = c(min(pinfish$sl), max(pinfish$sl)))
 points(sl ~ age, pch = 20, data = pinfish)
-
-
-
