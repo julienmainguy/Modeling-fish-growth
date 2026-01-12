@@ -231,7 +231,16 @@ RSS <- sum((prediction-pinfish$sl)^2)
 
 
 ## LEAVE-ONE-OUT CROSS-VALIDATION (LOO-CV) WITH ONE-STANDARD-ERROR (1SE) RULE BASED ON THE MEAN RMSE
+
 ## Note that because this dataset is quite large (n = 665), this process takes about one minute to be completed.
+## In this example, removing one observation at a time did not created modeling issues, but this can occur and
+## would result in having one or likely more zeros values in the data frame containing all the computed RMSE values.
+## If such situation occurs, the Summarize() function of FSA will generate an additional metric *percZero* to
+## indicate the percentage of zeros in the considered dataset. As no observed value is expected to directly correspond
+## to the predicted value, a zero is highly likely to be attributable to a convergence issue or else. As a result,
+## the LOO-CV process will be unreliable as the mean RMSE will be further reduced (i.e., lower mean RMSE = beter) by
+## the presence of these zeros. Removing these zeros will not allow to compare the mean RMSE on a same basis neither 
+## when it is compared to another candidate model that experienced no analytical issues.
 
 n <- length(pinfish$age)                                                                             # as already defined in the previous step above
 RMSE <- numeric(n)
@@ -468,6 +477,11 @@ logLik<-logLik(m_pinfish_SCAM_GAUSSIAN)
 
 
 ## BIC
+
+## Note that the inadequate gamma SCAM is much better supported than the adequate Gaussian SCAM when relying on BIC.
+## Any information criteria, like AIC and BIC, will rank model regardless of whether they respect their distributional
+## assumptions or not. In this case, the gamma SCAM was previously identified as being inadequate and therefore, should
+## not be considered for model selection purposes, but is compared here to the Gaussian SCAM to illustrate this point.
 
 BIC(m_pinfish_SCAM_GAUSSIAN, m_pinfish_SCAM_GAMMA)
 
