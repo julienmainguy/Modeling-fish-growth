@@ -126,7 +126,7 @@ summary(m_pinfish_VB, correlation = TRUE)
 ## Check the adequacy of *m_pinfish_VB* with newly-available helper functions for the "hnp" package. A general Growth Function (GF) must first be created
 ## and is identically used for the VBGM, GGM, and LGM. But first, the (i) model, (ii) specific growth function, and (iii) dataset are defined for their use 
 ## with the associated code. Note that all the code rely on the information provided for model, growth_fun, and dataset. If the variable *age* is spelled
-## otherwise, such as *Age*, it has to be changed too in the code (see lines 148, 160, and 167 below), given that the R scripts are case-sensitive.
+## otherwise, such as *Age*, it has to be changed too in the code (see lines 148, 160, and 167 below), given that R scripts are case-sensitive.
 
 model <- m_pinfish_VB
 growth_fun <- VB_fun
@@ -173,8 +173,9 @@ ffun <- function(newresp) {
 
 ## Adequacy assessment based on a single diagnostic iteration with "hnp". A half-normal plot with a simulated envelope is produced.
 ## Because of the simulations being used, each requested iteration will produce results that slightly vary. The paint = TRUE argument
-## is used such that the residuals found outside the envelope are shown in red, whereas the print = TRUE argument display the number and
-## percentage of residuals found outside the envelope directly on the half-normal plot.
+## is used such that the residuals found outside the envelope are shown in red, whereas the print = TRUE argument displays the number 
+## and percentage of residuals found outside the envelope directly on the half-normal plot. Note that performing another "hnp" iteration 
+## will often produce a slightly different percentage value each time as a result of the model-based simulations being performed.
 
 hnp(original_model,
     newclass = TRUE,
@@ -186,7 +187,7 @@ hnp(original_model,
     print = TRUE)
 
 
-## Adequacy assessment based on n = 10 diagnostic iterations with "hnp". The seed *2026* is solely used for result reproducibility.
+## Adequacy assessment based on n = 10 diagnostic iterations with "hnp". The seed *2026* is solely used for reproducibility.
 ## The results of all the requested diagnostic iterations are then saved in the *hnp_summary* object.
 
 set.seed(2026)
@@ -227,19 +228,19 @@ n <- length(pinfish$age)
 logLik <- logLik(m_pinfish_VB)
 P <- attributes(logLik)$df
 prediction <- predict(m_pinfish_VB, pinfish, type = "response")
-RSS <- sum((prediction-pinfish$sl)^2)
-(RMSE_adj <- sqrt(RSS/(n - P)))
+RSS <- sum((prediction - pinfish$sl)^2)
+(RMSE_adj <- sqrt(RSS / (n - P)))
 
 
 ## LEAVE-ONE-OUT CROSS-VALIDATION (LOO-CV) WITH ONE-STANDARD-ERROR (1SE) RULE BASED ON THE MEAN RMSE
 
 ## Note that because this dataset is quite large (n = 665), this process takes about one minute to be completed.
-## In this example, removing one observation at a time did not created modeling issues, but this can occur and
+## In this example, removing one observation at a time did not create modeling issues, but this can occur and
 ## would result in having one or likely more zeros values in the data frame containing all the computed RMSE values.
 ## If such situation occurs, the Summarize() function of FSA will generate an additional metric *percZero* to
 ## indicate the percentage of zeros in the considered dataset. As no observed value is expected to directly correspond
 ## to the predicted value, a zero is highly likely to be attributable to a convergence issue or else. As a result,
-## the LOO-CV process will be unreliable as the mean RMSE will be further reduced (i.e., lower mean RMSE = beter) by
+## the LOO-CV process will be unreliable as the mean RMSE will be further reduced (i.e., lower mean RMSE = better) by
 ## the presence of these zeros. Removing these zeros will not allow to compare the mean RMSE on a same basis neither 
 ## when it is compared to another candidate model that experienced no analytical issues.
 
@@ -247,9 +248,9 @@ n <- length(pinfish$age)                                                        
 RMSE <- numeric(n)
 
 for (i in 1:n) {
-  train <- pinfish[-i, ]                                                                             # Leave out the i-th observation to create a new "train" dataset each time
-  test <- pinfish[i, ]                                                                               # Keep the i-th observation as the "test" dataset (n = 1) each time 
-  sv_pinfish_VB <- findGrowthStarts(sl ~ age, type = "von Bertalanffy", plot = TRUE, data = train)   # Estimate the starting values based on the "train" dataset
+  train <- pinfish[-i, ]                                                                             # Leave out the i-th observation to create a new *train* dataset each time
+  test <- pinfish[i, ]                                                                               # Keep the i-th observation as the *test* dataset (n = 1) each time 
+  sv_pinfish_VB <- findGrowthStarts(sl ~ age, type = "von Bertalanffy", plot = TRUE, data = train)   # Estimate the starting values based on the *train* dataset
   model <- nls(sl ~ VB_fun(age, Linf, K, t0), start = sv_pinfish_VB, data = train)                   # Estimate the three growth parameters for the final VBGM based on the "train" dataset
   prediction <- predict(model, newdata = test, type = "response")                                    # Yield the related predicted value for the single observation contained in the "test" dataset
   RMSE[i] <- sqrt(mean((prediction-test$sl)^2))                                                      # Calculate the RMSE each time
