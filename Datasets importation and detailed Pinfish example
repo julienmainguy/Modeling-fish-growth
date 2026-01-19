@@ -248,27 +248,27 @@ n <- length(pinfish$age)                                                        
 RMSE <- numeric(n)
 
 for (i in 1:n) {
-  train <- pinfish[-i, ]                                                                             # Leave out the i-th observation to create a new *train* dataset each time
-  test <- pinfish[i, ]                                                                               # Keep the i-th observation as the *test* dataset (n = 1) each time 
-  sv_pinfish_VB <- findGrowthStarts(sl ~ age, type = "von Bertalanffy", plot = TRUE, data = train)   # Estimate the starting values based on the *train* dataset
-  model <- nls(sl ~ VB_fun(age, Linf, K, t0), start = sv_pinfish_VB, data = train)                   # Estimate the three growth parameters for the final VBGM based on the "train" dataset
-  prediction <- predict(model, newdata = test, type = "response")                                    # Yield the related predicted value for the single observation contained in the "test" dataset
-  RMSE[i] <- sqrt(mean((prediction-test$sl)^2))                                                      # Calculate the RMSE each time
+  train <- pinfish[-i, ]                                                                             # leave out the i-th observation to create a new *train* dataset each time
+  test <- pinfish[i, ]                                                                               # keep the i-th observation as the *test* dataset (n = 1) each time 
+  sv_pinfish_VB <- findGrowthStarts(sl ~ age, type = "von Bertalanffy", plot = TRUE, data = train)   # estimate the starting values based on the *train* dataset
+  model <- nls(sl ~ VB_fun(age, Linf, K, t0), start = sv_pinfish_VB, data = train)                   # estimate the three growth parameters for the final VBGM based on the "train" dataset
+  prediction <- predict(model, newdata = test, type = "response")                                    # yield the related predicted value for the single observation contained in the "test" dataset
+  RMSE[i] <- sqrt(mean((prediction-test$sl)^2))                                                      # calculate the RMSE each time
 }
 
-results_pinfish_VB <- data.frame(METHOD = "VB", RMSE)                                                # Store all the RMSE values in a same data frame
+results_pinfish_VB <- data.frame(METHOD = "VB", RMSE)                                                # store all the RMSE values in a same data frame
 
-Summarize(RMSE ~ 1, data = results_pinfish_VB)                                                       # Obtain the descriptive statistics, including the mean RMSE from this LOO-CV approach
+Summarize(RMSE ~ 1, data = results_pinfish_VB)                                                       # obtain the descriptive statistics, including the mean RMSE from this LOO-CV approach
 
-(sd(results_pinfish_VB$RMSE)/sqrt(n))                                                                # Calculate the estimated standard error (SE) to be used for the 1SE rule
+(sd(results_pinfish_VB$RMSE)/sqrt(n))                                                                # valculate the estimated standard error (SE) to be used for the 1SE rule
 
 logLik <- logLik(m_pinfish_VB)              
-(attributes(logLik)$df)                                                                              # Obtain the parameter degrees of freedom (d.f.) or P, which is d.f. = 4 for the VBGM, GGM, and LGM
+(attributes(logLik)$df)                                                                              # obtain the parameter degrees of freedom (d.f.) or P, which is d.f. = 4 for the VBGM, GGM, and LGM
 
 
 ## BAYESIAN INFORMATION CRITERION (BIC)
 
-BIC(m_pinfish_VB, m_pinfish_GZ, m_pinfish_LG)
+## BIC(m_pinfish_VB, m_pinfish_GZ, m_pinfish_LG)                                                     # once the GGM and LGM have also been fitted
 
 
 ## PREDICTED VALUES
@@ -296,7 +296,7 @@ m_pinfish_SCAM_GAUSSIAN <- scam(sl ~ s(age, bs = "micv"),
 summary(m_pinfish_SCAM_GAUSSIAN)
 
 
-## Gamma distribution with log link
+## Use the gamma distribution with log link as an alternative
 
 m_pinfish_SCAM_GAMMA <- scam(sl ~ s(age, bs = "micv"),
                              family = Gamma(link = "log"),
@@ -312,8 +312,9 @@ summary(m_pinfish_SCAM_GAMMA)
 ## Given that the "scam" package is a direct extension of "mgcv", the required helper functions are nearly-identical. In all cases, the sfun() helper function
 ## must be correctly specified relative to the distribution family used, i.e. Gaussian or gamma with log link in this study (see Mainguy et al. 2026). Here,
 ## only the modal percentage of residuals found outside the simulated envelope is presented, but producing a single half-normal plot can similarly be done as for
-## the VBGM presented above. First, the model, distribution family, optimizer, and dataset used are specified to then process with the step of adequacy assessment.
-## The ffun() helper function always need to have the right-part next to *resp ~* identical to the model being tested (e.g., if age is written as Age for instance). 
+## the VBGM presented above. First, the (i) model, (ii) distribution family, (iii) optimizer, and (iv) dataset used are specified to then process with the step of 
+## adequacy assessment. The ffun() helper function always need to have the right-part next to *resp ~* identical to the model being tested (e.g., if *age* is written
+## as *Age* for instance). 
 
 ## Assessment of the Gaussian SCAM requiring that the normality and homoscedasticity assumptions are sufficiently respected. Takes longer than for the VBGM.
 
@@ -414,7 +415,7 @@ round(return_max(hnp_summary), 2)
 
 ## The (unadjusted) coefficient of determination (R2) for a Gaussian SCAM or the (unadjusted) deviance explained (D2) for a gamma SCAM
 ## are directly provided in the scam() function output under "Deviance explained" (see main text). Briefly, D2 is the R2 analogue for
-## non-Gaussian models (Guisan and Zimmermann 2000), such as for the gamma SCAM and is estimated as follows:
+## non-Gaussian models, such as for the gamma SCAM, and is estimated as follows:
 
 model <- m_pinfish_SCAM_GAMMA
 (D2 <- 100 * (1 - model$deviance / model$null.deviance))          # should match the value provided under "Deviance explained" in the model output
@@ -439,7 +440,9 @@ n <- summary(model)$n
 ## are completely identical to those described above for the VBGM. Below, only the Gaussian SCAM is considered to yield
 ## these values.
 
-## IMPORTANT: as opposed to the VBGM, GGM, and LGM, each SCAM will vary in its model parameter d.f. depending on how many
+## IMPORTANT: 
+
+## As opposed to the VBGM, GGM, and LGM, each SCAM will vary in its model parameter d.f. (P) depending on how many
 ## effective degrees of freedom (edf) it requires to generate the smoothed growth curve (i.e., less nonlinearity, less edf).
 ## The penalization of the model relies on the "equivalent-df" of the model incorporating both the df (i.e., intercept) and edf.
 ## As such, P for the RMSE_adj and the last part of the code for the LOO-CV and 1SE rule will provide the value reflecting the
@@ -451,8 +454,8 @@ n <- length(pinfish$age)
 logLik <- logLik(m_pinfish_SCAM_GAUSSIAN)
 P <- attributes(logLik)$df
 prediction <- predict(m_pinfish_SCAM_GAUSSIAN, pinfish, type = "response")
-RSS <- sum((prediction-pinfish$sl)^2)
-(RMSE_adj <- sqrt(RSS/(n - P)))
+RSS <- sum((prediction - pinfish$sl)^2)
+(RMSE_adj <- sqrt(RSS / (n - P)))
 
 
 ## LOO-CV and 1SE rule (Gaussian SCAM)
