@@ -12,13 +12,13 @@ library(visreg)
 ## can be directly achieved once the "fishmethods" and "FSAdata" packages have been activated in R. Note that
 ## additional steps to remove some sampled fish may be required, which is the case for the three detailed examples
 ## presented in the main text (1) pinfish, (2) male black drums, and (3) female haddocks. Given that these three
-## datasets are presented in more details, here are the additional code that were applied applied:
+## datasets are presented in more details, here are the additional code that were applied:
 
 ## Example 1: pinfish (Nelson 2002)
 
-## The original pinfish dataset, which is the only linked to the "fishmethods" package (Nelson 2025), has 670 sampled males 
-## and females, and using the headtail() function of the "FSA" package will show the first and last three lines of this
-## dataset to confirm this.
+## The original pinfish dataset, which is the only one linked to the "fishmethods" package (Nelson 2025), has 670 sampled  
+## males and females, and using the headtail() function of the "FSA" package will show the first and last three lines of 
+## this dataset to confirm this.
 
 headtail(pinfish)
 
@@ -63,7 +63,7 @@ haddock <- read.delim(url)
 
 
 ## This dataset was however further reduced by Honsey et al. (2017) by discarding the two smallest females despite the fact that these
-## two observations did not appear to represent outliers, but could possibly have had a leverage on the linear relationship describing
+## two observations did not appear to represent outliers, but could possibly have had a leverage effect on the linear relationship describing
 ## the first phase of the biphasic growth model and could thus possibly having been removed for such reason. Regardless of the reason 
 ## behind their removal, the original dataset was reduced to n = 359 by only containing female haddocks exhibiting a total lenght (tl) 
 ## of 20 cm or more.
@@ -74,9 +74,10 @@ Summarize(Age ~ 1, data = haddock)
 
 ## In the other 18 examples, the removal of NA's sometimes needed to be performed prior to analyze the length-at-age data, such as in the
 ## RuffeSLRH92 data with n = 738 sampled fish of which only 12 had their age identified, as indicated from using the Summarize() function
-## of FSA, such that all the sampled fish with NA's for the *age* variable were removed.
+## of "FSA" under *nvalid*, such that all the sampled fish with NA's for the *age* variable were removed.
 
 Summarize(age ~ 1, data = RuffeSLRH92)
+
 RuffeSLRH92 <- RuffeSLRH92[!is.na(RuffeSLRH92$age),]
 Summarize(age ~ 1, data = RuffeSLRH92)
 
@@ -97,7 +98,7 @@ GZ_fun <- makeGrowthFun(type = "Gompertz")
 LG_fun <- makeGrowthFun(type = "logistic")
 
 
-## Starting values for the VBGM are first estimated and stored in the object "sv_pinfish_VB", with the same step identically achieved for
+## Starting values for the VBGM are first estimated and stored in the object *sv_pinfish_VB*, with the same step identically achieved for
 ## the GGM and LGM (not shown), again using "FSA".
 
 sv_pinfish_VB <- findGrowthStarts(sl ~ age, 
@@ -106,14 +107,14 @@ sv_pinfish_VB <- findGrowthStarts(sl ~ age,
                                   data = pinfish)
 
 
-## Obtain the final VBGM from jointly using the VB_fun() function and estimated starting values (i.e., sv_pinfish_VB)
+## Obtain the final VBGM from jointly using the VB_fun() function and estimated starting values (i.e., *sv_pinfish_VB*)
 
 m_pinfish_VB <- nls(sl ~ VB_fun(age, Linf, K, t0),
                     start = sv_pinfish_VB, 
                     data = pinfish)
 
 
-## Yield the summary output and ask for the estimation of the correlation coefficients between the three growth parameters as provided by the
+## Yield the summary output and ask for the estimation of the correlation coefficients between the three growth parameters, as provided by the
 ## "nlstools" package. Note the extremely high values of the correlation coefficients, especially betweeen Linf and K, and also K and t0. Such
 ## strong correlations between parameters are not uncommon.
 
@@ -122,10 +123,10 @@ summary(m_pinfish_VB, correlation = TRUE)
 
 ## MODEL ADEQUACY
 
-## Check the adequacy of m_pinfish_VB with newly-available helper functions for the "hnp" package. A general Growth Function (GF) must first be created
-## and is identically used for the VBGM, GGM, and LGM. But first, the model, specific growth function, and dataset being used are defined for their use
-## with the associated code. Note that all the code rely on the information provided for model, growth_fun, and dataset. If the variable "age" is spelled
-## otherwise, such as "Age" or "AGE", it has to be changed too in the code (see lines 147, 159, and 166 below), given that the R scripts are case-sensitive.
+## Check the adequacy of *m_pinfish_VB* with newly-available helper functions for the "hnp" package. A general Growth Function (GF) must first be created
+## and is identically used for the VBGM, GGM, and LGM. But first, the (i) model, (ii) specific growth function, and (iii) dataset are defined for their use 
+## with the associated code. Note that all the code rely on the information provided for model, growth_fun, and dataset. If the variable *age* is spelled
+## otherwise, such as *Age*, it has to be changed too in the code (see lines 148, 160, and 167 below), given that the R scripts are case-sensitive.
 
 model <- m_pinfish_VB
 growth_fun <- VB_fun
@@ -150,7 +151,7 @@ original_model <- GF(sl ~ VB_fun(age, Linf, K, t0),
 
 
 ## Then, the helper functions dfun(), sfun(), and ffun() are defined to be used with the hnp() function of "hnp". The dfun() and sfun()
-## functions remain the same at all times, whereas the ffun() function must list the three specific growth parameters being used (line 166). 
+## functions remain the same at all times, whereas the ffun() function must list the three specific growth parameters being used (line 167). 
 
 dfun <- function(obj) obj$residuals
 
