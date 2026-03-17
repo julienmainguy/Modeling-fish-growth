@@ -157,7 +157,7 @@ dfun <- function(obj) obj$residuals
 
 sfun <- function(n, obj) {
   theta <- coef(obj$fit)
-  mu <- growth_fun(dataset$age, theta[1], theta[2], theta[3])
+  mu <- growth_fun(dataset$otoage, theta[1], theta[2], theta[3])            # the *otoage* variable must be correcly typed
   sigma <- sigma(obj$fit)
   y <- rnorm(length(mu), mu, sigma)
   return(y)
