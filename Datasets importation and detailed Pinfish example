@@ -11,8 +11,8 @@ library(visreg)
 ## The importation of all but one of the 21 publicly-available datasets presented in Table 1 of the main text
 ## can be directly achieved once the "fishmethods" and "FSAdata" packages have been activated in R. Note that
 ## additional steps to remove some sampled fish may be required, which is the case for the three detailed examples
-## presented in the main text (1) pinfish, (2) male black drums, and (3) female haddocks. Given that these three
-## datasets are presented in more details, here are the additional code that were applied:
+## presented in the main text for (1) pinfish, (2) male black drums, and (3) female haddocks. Given that these three
+## datasets are all analyzed in more details, here are the additional code that were applied:
 
 ## Example 1: pinfish (Nelson 2002)
 
@@ -123,10 +123,10 @@ summary(m_bdm_VB, correlation = TRUE)
 
 ## MODEL ADEQUACY
 
-## Check the adequacy of *m_pinfish_VB* with newly-available helper functions for the "hnp" package. A general Growth Function (GF) must first be created
+## Check the adequacy of *m_bdm_VB* with newly-available helper functions for the "hnp" package. A general Growth Function (GF) must first be created
 ## and is identically used for the VBGM, GGM, and LGM. But first, the (i) model, (ii) specific growth function, and (iii) dataset are defined for their use 
 ## with the associated code. Note that all the code rely on the information provided for model, growth_fun, and dataset. If the variable *age* is spelled
-## otherwise, such as *Age*, it has to be changed too in the code (see lines 148, 160, and 167 below), given that R scripts are case-sensitive.
+## otherwise, such as *Age* or *otoage* in this example, it has to be changed too in the code.
 
 model <- m_bdm_VB
 growth_fun <- VB_fun
@@ -142,8 +142,8 @@ GF <- function(formula, start, data) {
 }
 
 
-## The growth model being assessed for its adequacy, here *m_pinfish_VB*, is then refitted as the *original_model* with the just-created
-## GF() function and the specific one for the investigated growth model, here VB_fun(), which has already been defined. 
+## The growth model being assessed for its adequacy, here *m_bdm_VB*, is then refitted as the *original_model* with the just-created
+## GF() function and the specific one for the investigated growth model, here VB_fun(), which has already been previously defined. 
 
 original_model <- GF(tl ~ VB_fun(otoage, Linf, K, t0), 
                      start = sv_bdm_VB,
@@ -157,7 +157,7 @@ dfun <- function(obj) obj$residuals
 
 sfun <- function(n, obj) {
   theta <- coef(obj$fit)
-  mu <- growth_fun(dataset$otoage, theta[1], theta[2], theta[3])            # the *otoage* variable must be correcly typed
+  mu <- growth_fun(dataset$otoage, theta[1], theta[2], theta[3])            # the *AGE* variable must be correcly typed, here = *otoage*
   sigma <- sigma(obj$fit)
   y <- rnorm(length(mu), mu, sigma)
   return(y)
@@ -177,6 +177,11 @@ ffun <- function(newresp) {
 ## and percentage of residuals found outside the envelope directly on the half-normal plot. Note that performing another "hnp" iteration 
 ## will often produce a slightly different percentage value each time as a result of the model-based simulations being performed.
 
+## It is recommended to first perform a single hnp diagnostic to visually assess how the residuals are distributed relative to the
+## simulated envelope. For instance, a percentage of residuals found outside the envelope near 0% or 1% already indicates that
+## the considered model is sufficiently adequate, whereas a high value such as 47% or 89% is instead clearly indicative of an 
+## inadequate model.
+
 hnp(original_model,
     newclass = TRUE,
     diagfun = dfun,
@@ -187,8 +192,11 @@ hnp(original_model,
     print = TRUE)
 
 
-## Adequacy assessment based on n = 10 diagnostic iterations with "hnp". The seed *2026* is solely used for reproducibility.
-## The results of all the requested diagnostic iterations are then saved in the *hnp_summary* object.
+## Ideally, an adequacy assessment with "hnp" should be based on more diagnostic iterations, such as n = 10, to account for the fact
+## that the envelope limits are simulated. This is especially true when a single "hnp" provides a percentage that is close the proposed
+## arbitrary threshold of 10%. On the other hand, using more iterations translates in more computational time being required to perform
+## such adequacy assessment, as done below. The seed *2026* is solely used for reproducibility. This assessment takes several minutes
+## to be fully performed. The dfun, sfun, and ffun functions are the same as the ones defined in the previous steps above.
 
 set.seed(2026)
 n <- 10
@@ -202,6 +210,9 @@ for(i in 1:n) {
                    how.many.out = TRUE,
                    plot.sim = FALSE)
 }
+
+
+## The results of all the diagnostic iterations are then saved in the *hnp_summary* object.
 
 hnp_summary <- sapply(hnp_obj, function(x) x$out / x$total * 100) 
 
@@ -248,40 +259,50 @@ n <- length(bdm$otoage)                                                         
 RMSE <- numeric(n)
 
 for (i in 1:n) {
-  train <- bdm[-i, ]                                                                             # leave out the i-th observation to create a new *train* dataset each time
-  test <- bdm[i, ]                                                                               # keep the i-th observation as the *test* dataset (n = 1) each time 
+  train <- bdm[-i, ]                                                                                # leave out the i-th observation to create a new *train* dataset each time
+  test <- bdm[i, ]                                                                                  # keep the i-th observation as the *test* dataset (n = 1) each time 
   sv_bdm_VB <- findGrowthStarts(tl ~ otoage, type = "von Bertalanffy", plot = TRUE, data = train)   # estimate the starting values based on the *train* dataset
   model <- nls(tl ~ VB_fun(otoage, Linf, K, t0), start = sv_bdm_VB, data = train)                   # estimate the three growth parameters for the final VBGM based on the "train" dataset
-  prediction <- predict(model, test, type = "response")                                    # yield the related predicted value for the single observation contained in the "test" dataset
-  RMSE[i] <- sqrt(mean((prediction-test$tl)^2))                                                      # calculate the RMSE each time
+  prediction <- predict(model, test, type = "response")                                             # yield the related predicted value for the single observation contained in the "test" dataset
+  RMSE[i] <- sqrt(mean((prediction-test$tl)^2))                                                     # calculate the RMSE each time
 }
 
-results_bdm_VB <- data.frame(METHOD = "VB", RMSE)                                                # store all the RMSE values in a same data frame
+# Store all the RMSE values in a same data frame
 
-Summarize(RMSE ~ 1, data = results_bdm_VB)                                                       # obtain the descriptive statistics, including the mean RMSE from this LOO-CV approach
+results_bdm_VB <- data.frame(METHOD = "VB", RMSE)                                                
 
-(sd(results_bdm_VB$RMSE)/sqrt(n))                                                                # valculate the estimated standard error (SE) to be used for the 1SE rule
 
-logLik <- logLik(m_bdm_VB)              
-(attributes(logLik)$df)                                                                              # obtain the parameter degrees of freedom (d.f.) or P, which is d.f. = 4 for the VBGM, GGM, and LGM
+# Obtain the mean RMSE from this LOO-CV approach
+
+(mean(results_bdm_VB$RMSE))
+
+
+# Calculate the estimated standard error (SE) to be used for the 1SE rule
+
+(sd(results_bdm_VB$RMSE)/sqrt(n))       
+
+
+# Obtain the parameter degrees of freedom (d.f.) or P in the main text, which is always of 4 for the VBGM, GGM, and LGM
+
+logLik <- logLik(m_bdm_VB)
+(attributes(logLik)$df)                           
 
 
 ## BAYESIAN INFORMATION CRITERION (BIC)
 
-## BIC(m_bdm_VB, m_bdm_GZ, m_bdm_LG)                                                     # once the GGM and LGM have also been fitted
+## BIC(m_bdm_VB, m_bdm_GZ, m_bdm_LG)                                                             # once the GGM and LGM have also been fitted
 
 
 ## PREDICTED VALUES
 
-nd <- data.frame(otoage = seq(min(bdm$otoage), max(bdm$otoage), by = 0.02))                           # select an incremental value (i.e., by = 0.02) allowing to offer a smoothed curve
+nd <- data.frame(otoage = seq(min(bdm$otoage), max(bdm$otoage), by = 0.1))                       # select an incremental value (i.e., by = 0.02) allowing to offer a smoothed curve
 estimate <- predict(m_bdm_VB, nd, type = "response")
 results <- data.frame(nd, estimate)
+plot(tl ~ otoage, data = bdm)                                                                    # simple plot showing the observed values
+points(estimate ~ otoage, data = results, pch = 20, type = "b", lwd = 1.5, col = "red")          # adding the predicted values to assess their fit to the length-at-age data
 
-plot(tl ~ otoage, data = bdm)                                                                       # simple plot showing the observed values
-points(estimate ~ otoage, data = results, pch = 20, type = "b", lwd = 1.5, col = "red")                 # adding the predicted values to assess their fit to the length-at-age data
 
-
-############################## SHAPE-CONSTRAINED ADDITIVE MODELING (SCAM) FRAMEWORK ###########################################
+############################## SHAPE-CONSTRAINED ADDITIVE MODELING (SCAM) FRAMEWORK #############################################
 
 ## The smooth function s() applied to *age* below imposes through *bs = "micv"* a monotically (m) increasing (i) and convave (cv) 
 ## curvilinear pattern using the "scam" package.
@@ -316,7 +337,9 @@ summary(m_bdm_SCAM_GAMMA)
 ## adequacy assessment. The ffun() helper function always need to have the right-part next to *resp ~* identical to the model being tested (e.g., if *age* is written
 ## as *Age* for instance). 
 
-## Assessment of the Gaussian SCAM requiring that the normality and homoscedasticity assumptions are sufficiently respected. Takes longer than for the VBGM.
+## Assessment of the Gaussian SCAM requiring that the normality and homoscedasticity assumptions are sufficiently respected.
+
+## First perform a single "hnp" diagnostic
 
 model <- m_bdm_SCAM_GAUSSIAN 
 family <- gaussian
@@ -333,11 +356,24 @@ sfun <- function(n, obj) {
 }
 
 ffun <- function(resp) {
-             scam(resp ~ s(otoage, bs = "micv"),                            # the *otoage* variable must be correcly typed
+             scam(resp ~ s(otoage, bs = "micv"),                            # the *AGE* variable must be correcly typed, here = *otoage*
                   family = family,
                   optimizer = optimizer,
                   data = dataset)
 }
+
+hnp(model, 
+    newclass = TRUE,
+    diagfun = dfun,
+    simfun = sfun,
+    fitfun = ffun,
+    how.many.out = TRUE,
+    paint = TRUE,
+    print = TRUE)
+
+
+## Perform 10 "hnp" iterations to get a modal percentage of residuals found outside the simulated envelope.
+## This takes a few minutes.
 
 set.seed(2026)
 n <- 10
@@ -364,7 +400,10 @@ round(return_max(hnp_summary), 2)
 ## Assessment of the gamma SCAM requiring that the variance is sufficiently proportional to the mean. Given that the observed data do not apparently 
 ## behave in such a way since the variation in lengths is not really increasing as fish age, this will likely be detected by "hnp" and thus provide
 ## a modal percentage of residuals found outside the envelope higher than the proposed 10%-threshold for an acceptable fit. This assessment takes a bit
-## more time than that of the Gaussian SCAM just performed above.
+## more time than that of the Gaussian SCAM just performed above when based on n = 10 "hnp" iterations. Note that the sfun function for the
+## gamma SCAM differs from that of the Gaussian SCAM (i.e., the sfun is distribution-specific).
+
+## First perform a single "hnp" diagnostic
 
 model <- m_bdm_SCAM_GAMMA
 family <- Gamma(link = "log")
@@ -383,13 +422,26 @@ sfun <- function(n, obj) {
 }
 
 ffun <- function(resp) {
-        scam(resp ~ s(otoage, bs = "micv"),                            # the *otoage* variable must be correcly typed
+        scam(resp ~ s(otoage, bs = "micv"),                            # the *AGE* variable must be correcly typed, here = *otoage*
              family = family,
              optimizer = optimizer,
              data = dataset)
 }
 
-set.seed(2025)
+hnp(model, 
+    newclass = TRUE,
+    diagfun = dfun,
+    simfun = sfun,
+    fitfun = ffun,
+    how.many.out = TRUE,
+    paint = TRUE,
+    print = TRUE)
+
+
+## Perform 10 "hnp" iterations to get a modal percentage of residuals found outside the simulated envelope.
+## This takes a few minutes.
+
+set.seed(2026)
 n <- 10
 hnp_obj <- list()
 for(i in 1:n) {
