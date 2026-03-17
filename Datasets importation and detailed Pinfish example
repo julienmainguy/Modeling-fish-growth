@@ -4,7 +4,7 @@ library(FSAdata)
 library(hnp)
 library(nlraa)
 library(nlstools)
-library(scam)
+library(scam)           ## version 1.2-22 or more recent
 library(tidyverse)
 library(visreg)
 
@@ -488,7 +488,7 @@ logLik<-logLik(m_pinfish_SCAM_GAUSSIAN)
 ## assumptions or not. In this case, the gamma SCAM was previously identified as being inadequate and therefore, should
 ## not be considered for model selection purposes, but is compared here to the Gaussian SCAM to illustrate this point.
 
-BIC(m_pinfish_SCAM_GAUSSIAN, m_pinfish_SCAM_GAMMA)
+BIC(m_bdm_SCAM_GAUSSIAN, m_bdm_SCAM_GAMMA)
 
 
 ## PREDICTED VALUES
@@ -498,5 +498,5 @@ BIC(m_pinfish_SCAM_GAUSSIAN, m_pinfish_SCAM_GAMMA)
 ## generate the predicted values and related uncertainty at the response scale. Below the code for the Gaussian SCAM to 
 ## which we also add the observed values with the points() function.
 
-visreg(m_pinfish_SCAM_GAUSSIAN, scale = "response", rug = FALSE, ylim = c(min(pinfish$sl), max(pinfish$sl)))
-points(sl ~ age, pch = 20, data = pinfish)
+visreg(m_bdm_SCAM_GAUSSIAN, scale = "response", rug = FALSE, ylim = c(min(bdm$tl), max(bdm$tl)))
+points(tl ~ otoage, pch = 20, data = bdm)
