@@ -84,8 +84,8 @@ Summarize(age ~ 1, data = RuffeSLRH92)
 
 ## NOTE
 
-## As the overall analytical approach is identical for all datasets, only the analysis of the first example for the 665 pinfish (Nelson 2002)
-## is shown below.
+## As the overall analytical approach is identical for all datasets, only the analysis of the second example for the 74 male black drums (Ogle 2016)
+## is shown below (i.e., small sample size = less computational time being required).
 
 
 ############################## COMMONLY-USED GROWTH MODELS (VON BERTALANFFY, GOMPERTZ, AND LOGISTIC) #########################################
@@ -101,24 +101,24 @@ LG_fun <- makeGrowthFun(type = "logistic")
 ## Starting values for the VBGM are first estimated and stored in the object *sv_pinfish_VB*, with the same step identically achieved for
 ## the GGM and LGM (not shown), again using "FSA".
 
-sv_pinfish_VB <- findGrowthStarts(sl ~ age, 
+sv_bdm_VB <- findGrowthStarts(tl ~ otoage, 
                                   type = "von Bertalanffy",
                                   plot = TRUE,
-                                  data = pinfish)
+                                  data = bdm)
 
 
-## Obtain the final VBGM from jointly using the VB_fun() function and estimated starting values (i.e., *sv_pinfish_VB*)
+## Obtain the final VBGM from jointly using the VB_fun() function and estimated starting values (i.e., *sv_bdm_VB*)
 
-m_pinfish_VB <- nls(sl ~ VB_fun(age, Linf, K, t0),
-                    start = sv_pinfish_VB, 
-                    data = pinfish)
+m_bdm_VB <- nls(tl ~ VB_fun(otoage, Linf, K, t0),
+                    start = sv_bdm_VB, 
+                    data = bdm)
 
 
 ## Yield the summary output and ask for the estimation of the correlation coefficients between the three growth parameters, as provided by the
 ## "nlstools" package. Note the extremely high values of the correlation coefficients, especially betweeen Linf and K, and also K and t0. Such
 ## strong correlations between parameters are not uncommon.
 
-summary(m_pinfish_VB, correlation = TRUE)
+summary(m_bdm_VB, correlation = TRUE)
 
 
 ## MODEL ADEQUACY
@@ -128,9 +128,9 @@ summary(m_pinfish_VB, correlation = TRUE)
 ## with the associated code. Note that all the code rely on the information provided for model, growth_fun, and dataset. If the variable *age* is spelled
 ## otherwise, such as *Age*, it has to be changed too in the code (see lines 148, 160, and 167 below), given that R scripts are case-sensitive.
 
-model <- m_pinfish_VB
+model <- m_bdm_VB
 growth_fun <- VB_fun
-dataset <- pinfish
+dataset <- bdm
 
 GF <- function(formula, start, data) {
                y <- data[[paste(formula[[2]])]]
@@ -145,8 +145,8 @@ GF <- function(formula, start, data) {
 ## The growth model being assessed for its adequacy, here *m_pinfish_VB*, is then refitted as the *original_model* with the just-created
 ## GF() function and the specific one for the investigated growth model, here VB_fun(), which has already been defined. 
 
-original_model <- GF(sl ~ VB_fun(age, Linf, K, t0), 
-                     start = sv_pinfish_VB,
+original_model <- GF(tl ~ VB_fun(otoage, Linf, K, t0), 
+                     start = sv_bdm_VB,
                      data = dataset)
 
 
@@ -164,8 +164,8 @@ sfun <- function(n, obj) {
 }
 
 ffun <- function(newresp) {
-  fit <- GF(newresp ~ growth_fun(age, Linf, K, t0), 
-            start = sv_pinfish_VB,
+  fit <- GF(newresp ~ growth_fun(otoage, Linf, K, t0), 
+            start = sv_bdm_VB,
             data = dataset %>% mutate(newresp = newresp))
   return(fit)
 }
@@ -219,16 +219,16 @@ round(return_max(hnp_summary), 2)
 
 ## Estimate the (unadjusted) coefficient of determination (R2) with the R2M() function of the "nlraa" package.
 
-R2M(m_pinfish_VB)$R2 * 100
+R2M(m_bdm_VB)$R2 * 100
 
 
 ## ADJUSTED ROOT MEAN SQUARE ERROR (RMSE_adj)
 
-n <- length(pinfish$age)
-logLik <- logLik(m_pinfish_VB)
+n <- length(bdm$otoage)
+logLik <- logLik(m_bdm_VB)
 P <- attributes(logLik)$df
-prediction <- predict(m_pinfish_VB, pinfish, type = "response")
-RSS <- sum((prediction - pinfish$sl)^2)
+prediction <- predict(m_bdm_VB, bdm, type = "response")
+RSS <- sum((prediction - bdm$tl)^2)
 (RMSE_adj <- sqrt(RSS / (n - P)))
 
 
@@ -244,41 +244,41 @@ RSS <- sum((prediction - pinfish$sl)^2)
 ## the presence of these zeros. Removing these zeros will not allow to compare the mean RMSE on a same basis neither 
 ## when it is compared to another candidate model that experienced no analytical issues.
 
-n <- length(pinfish$age)                                                                             # as already defined in the previous step above
+n <- length(bdm$otoage)                                                                             # as already defined in the previous step above
 RMSE <- numeric(n)
 
 for (i in 1:n) {
-  train <- pinfish[-i, ]                                                                             # leave out the i-th observation to create a new *train* dataset each time
-  test <- pinfish[i, ]                                                                               # keep the i-th observation as the *test* dataset (n = 1) each time 
-  sv_pinfish_VB <- findGrowthStarts(sl ~ age, type = "von Bertalanffy", plot = TRUE, data = train)   # estimate the starting values based on the *train* dataset
-  model <- nls(sl ~ VB_fun(age, Linf, K, t0), start = sv_pinfish_VB, data = train)                   # estimate the three growth parameters for the final VBGM based on the "train" dataset
-  prediction <- predict(model, newdata = test, type = "response")                                    # yield the related predicted value for the single observation contained in the "test" dataset
-  RMSE[i] <- sqrt(mean((prediction-test$sl)^2))                                                      # calculate the RMSE each time
+  train <- bdm[-i, ]                                                                             # leave out the i-th observation to create a new *train* dataset each time
+  test <- bdm[i, ]                                                                               # keep the i-th observation as the *test* dataset (n = 1) each time 
+  sv_bdm_VB <- findGrowthStarts(tl ~ otoage, type = "von Bertalanffy", plot = TRUE, data = train)   # estimate the starting values based on the *train* dataset
+  model <- nls(tl ~ VB_fun(otoage, Linf, K, t0), start = sv_bdm_VB, data = train)                   # estimate the three growth parameters for the final VBGM based on the "train" dataset
+  prediction <- predict(model, test, type = "response")                                    # yield the related predicted value for the single observation contained in the "test" dataset
+  RMSE[i] <- sqrt(mean((prediction-test$tl)^2))                                                      # calculate the RMSE each time
 }
 
-results_pinfish_VB <- data.frame(METHOD = "VB", RMSE)                                                # store all the RMSE values in a same data frame
+results_bdm_VB <- data.frame(METHOD = "VB", RMSE)                                                # store all the RMSE values in a same data frame
 
-Summarize(RMSE ~ 1, data = results_pinfish_VB)                                                       # obtain the descriptive statistics, including the mean RMSE from this LOO-CV approach
+Summarize(RMSE ~ 1, data = results_bdm_VB)                                                       # obtain the descriptive statistics, including the mean RMSE from this LOO-CV approach
 
-(sd(results_pinfish_VB$RMSE)/sqrt(n))                                                                # valculate the estimated standard error (SE) to be used for the 1SE rule
+(sd(results_bdm_VB$RMSE)/sqrt(n))                                                                # valculate the estimated standard error (SE) to be used for the 1SE rule
 
-logLik <- logLik(m_pinfish_VB)              
+logLik <- logLik(m_bdm_VB)              
 (attributes(logLik)$df)                                                                              # obtain the parameter degrees of freedom (d.f.) or P, which is d.f. = 4 for the VBGM, GGM, and LGM
 
 
 ## BAYESIAN INFORMATION CRITERION (BIC)
 
-## BIC(m_pinfish_VB, m_pinfish_GZ, m_pinfish_LG)                                                     # once the GGM and LGM have also been fitted
+## BIC(m_bdm_VB, m_bdm_GZ, m_bdm_LG)                                                     # once the GGM and LGM have also been fitted
 
 
 ## PREDICTED VALUES
 
-nd <- data.frame(age = seq(min(pinfish$age), max(pinfish$age), by = 0.02))                           # select an incremental value (i.e., by = 0.02) allowing to offer a smoothed curve
-estimate <- predict(m_pinfish_VB, nd, type = "response")
+nd <- data.frame(otoage = seq(min(bdm$otoage), max(bdm$otoage), by = 0.02))                           # select an incremental value (i.e., by = 0.02) allowing to offer a smoothed curve
+estimate <- predict(m_bdm_VB, nd, type = "response")
 results <- data.frame(nd, estimate)
 
-plot(sl ~ age, data = pinfish)                                                                       # simple plot showing the observed values
-points(estimate ~ age, data = results, pch = 20, type = "b", lwd = 1.5, col = "red")                 # adding the predicted values to assess their fit to the length-at-age data
+plot(tl ~ otoage, data = bdm)                                                                       # simple plot showing the observed values
+points(estimate ~ otoage, data = results, pch = 20, type = "b", lwd = 1.5, col = "red")                 # adding the predicted values to assess their fit to the length-at-age data
 
 
 ############################## SHAPE-CONSTRAINED ADDITIVE MODELING (SCAM) FRAMEWORK ###########################################
@@ -288,22 +288,22 @@ points(estimate ~ age, data = results, pch = 20, type = "b", lwd = 1.5, col = "r
 
 ## Gaussian distribution with identity link
 
-m_pinfish_SCAM_GAUSSIAN <- scam(sl ~ s(age, bs = "micv"),    
+m_bdm_SCAM_GAUSSIAN <- scam(tl ~ s(otoage, bs = "micv"),    
                                 family = gaussian,
                                 optimizer = "efs",
-                                data = pinfish)
+                                data = bdm)
 
-summary(m_pinfish_SCAM_GAUSSIAN)
+summary(m_bdm_SCAM_GAUSSIAN)
 
 
 ## Use the gamma distribution with log link as an alternative
 
-m_pinfish_SCAM_GAMMA <- scam(sl ~ s(age, bs = "micv"),
+m_bdm_SCAM_GAMMA <- scam(tl ~ s(otoage, bs = "micv"),
                              family = Gamma(link = "log"),
                              optimizer = "efs",
-                             data = pinfish)
+                             data = bdm)
 
-summary(m_pinfish_SCAM_GAMMA)
+summary(m_bdm_SCAM_GAMMA)
 
 
 ## MODEL ADEQUACY
@@ -318,10 +318,10 @@ summary(m_pinfish_SCAM_GAMMA)
 
 ## Assessment of the Gaussian SCAM requiring that the normality and homoscedasticity assumptions are sufficiently respected. Takes longer than for the VBGM.
 
-model <- m_pinfish_SCAM_GAUSSIAN 
+model <- m_bdm_SCAM_GAUSSIAN 
 family <- gaussian
 optimizer <- "efs"
-dataset <- pinfish
+dataset <- bdm
 
 dfun <- function(obj) resid(obj, type = "deviance")
 
@@ -333,13 +333,13 @@ sfun <- function(n, obj) {
 }
 
 ffun <- function(resp) {
-             scam(resp ~ s(age, bs = "micv"),                            # the *age* variable must be correcly typed
+             scam(resp ~ s(otoage, bs = "micv"),                            # the *otoage* variable must be correcly typed
                   family = family,
                   optimizer = optimizer,
                   data = dataset)
 }
 
-set.seed(2025)
+set.seed(2026)
 n <- 10
 hnp_obj <- list()
 for (i in 1:n) {
@@ -366,7 +366,7 @@ round(return_max(hnp_summary), 2)
 ## a modal percentage of residuals found outside the envelope higher than the proposed 10%-threshold for an acceptable fit. This assessment takes a bit
 ## more time than that of the Gaussian SCAM just performed above.
 
-model <- m_pinfish_SCAM_GAMMA
+model <- m_bdm_SCAM_GAMMA
 family <- Gamma(link = "log")
 optimizer <- "efs"
 data <- dataset
@@ -383,7 +383,7 @@ sfun <- function(n, obj) {
 }
 
 ffun <- function(resp) {
-        scam(resp ~ s(age, bs = "micv"),                            # the *age* variable must be correcly typed
+        scam(resp ~ s(otoage, bs = "micv"),                            # the *otoage* variable must be correcly typed
              family = family,
              optimizer = optimizer,
              data = dataset)
@@ -417,7 +417,7 @@ round(return_max(hnp_summary), 2)
 ## are directly provided in the scam() function output under "Deviance explained" (see main text). Briefly, D2 is the R2 analogue for
 ## non-Gaussian models, such as for the gamma SCAM, and is estimated as follows:
 
-model <- m_pinfish_SCAM_GAMMA
+model <- m_bdm_SCAM_GAMMA
 (D2 <- 100 * (1 - model$deviance / model$null.deviance))          # should match the value provided under "Deviance explained" in the model output
 
 
@@ -426,7 +426,7 @@ model <- m_pinfish_SCAM_GAMMA
 ## complexity to yield an adjusted D2 (D2_adj), the proposed adjustement by Guisan and Zimmermann (2000) should be used, as presented in Mainguy 
 ## et al. (2026) for GAMs, and which first requires the calculation of D2 as just shown above (yielding D2_adj < D2, as it should):
 
-model <- m_pinfish_SCAM_GAMMA
+model <- m_bdm_SCAM_GAMMA
 D2 <- 100 * (1 - model$deviance / model$null.deviance)
 logLik <- logLik(model)
 P <- attributes(logLik)$df
@@ -450,32 +450,32 @@ n <- summary(model)$n
 
 ## RMSE_adj (Gaussian SCAM)
 
-n <- length(pinfish$age)
-logLik <- logLik(m_pinfish_SCAM_GAUSSIAN)
+n <- length(bdm$otoage)
+logLik <- logLik(m_bdm_SCAM_GAUSSIAN)
 P <- attributes(logLik)$df
-prediction <- predict(m_pinfish_SCAM_GAUSSIAN, pinfish, type = "response")
-RSS <- sum((prediction - pinfish$sl)^2)
+prediction <- predict(m_bdm_SCAM_GAUSSIAN, bdm, type = "response")
+RSS <- sum((prediction - bdm$tl)^2)
 (RMSE_adj <- sqrt(RSS / (n - P)))
 
 
 ## LOO-CV and 1SE rule (Gaussian SCAM)
 
-n <- length(pinfish$age)
+n <- length(bdm$otoage)
 RMSE <- numeric(n)
 
 for (i in 1:n) {
-  train <- pinfish[-i, ]
-  test <- pinfish[i, ]
+  train <- bdm[-i, ]
+  test <- bdm[i, ]
   model <- scam(
-  sl ~ s(age, bs = "micv"), family = gaussian, optimizer = "efs", data = train)
-  prediction <- predict(model, newdata = test, type = "response")
-  RMSE[i] <- sqrt(mean((prediction-test$sl)^2))
+  tl ~ s(otoage, bs = "micv"), family = gaussian, optimizer = "efs", data = train)
+  prediction <- predict(model, test, type = "response")
+  RMSE[i] <- sqrt(mean((prediction-test$tl)^2))
 }
 
-results_pinfish_SCAM_GAUSSIAN <- data.frame(METHOD = "SCAM_GAUSSIAN", RMSE)
-Summarize(RMSE ~ 1, data = results_pinfish_SCAM_GAUSSIAN)
+results_bdm_SCAM_GAUSSIAN <- data.frame(METHOD = "SCAM_GAUSSIAN", RMSE)
+Summarize(RMSE ~ 1, data = results_bdm_SCAM_GAUSSIAN)
 
-(sd(results_pinfish_SCAM_GAUSSIAN$RMSE)/sqrt(n))
+(sd(results_bdm_SCAM_GAUSSIAN$RMSE)/sqrt(n))
 
 logLik<-logLik(m_pinfish_SCAM_GAUSSIAN)
 (attributes(logLik)$df)
