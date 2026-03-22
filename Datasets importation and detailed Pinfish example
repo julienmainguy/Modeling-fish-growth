@@ -549,3 +549,62 @@ BIC(m_bdm_SCAM_GAUSSIAN, m_bdm_SCAM_GAMMA)
 
 visreg(m_bdm_SCAM_GAUSSIAN, scale = "response", rug = FALSE, ylim = c(min(bdm$tl), max(bdm$tl)))
 points(tl ~ otoage, pch = 20, data = bdm)
+
+
+
+
+
+
+## MULTIPLE-COMPARISON EXAMPLE OF THREE GROWTH CURVES
+
+## Load the TROUT dataset from the study of Mainguy et al. (2026)
+
+url <- "https://raw.githubusercontent.com/julienmainguy/GAM-adequacy/refs/heads/main/TROUT"
+TROUT <- read.delim(url)
+
+TROUT$LAKE <- as.factor(TROUT$LAKE)
+
+m_TROUT_CAT <- scam(TL ~ LAKE + s(AGE, bs = "micv"),
+                    family = Gamma(link = "log"),
+                    optimizer = "efs",
+                    data = TROUT)
+
+summary(m_TROUT_CAT)
+
+model <- m_TROUT_CAT
+family = Gamma(link = "log")
+method = "ML"
+optimizer = "efs"
+data = TROUT
+
+dfun <- function(obj) resid(obj, type = "deviance")
+
+sfun <- function(n, obj) {
+  mu_hat <- fitted(obj)
+  phi <- summary(obj)$dispersion
+  shape <- 1 / phi
+  scale <- mu_hat * phi
+  y <- rgamma(n = length(mu_hat), shape = shape, scale = scale)
+  return(y)
+}
+
+ffun <- function(resp) {
+  gam(resp ~ LAKE + s(AGE, bs = "micv"),
+             family = family,
+             method = method,
+             optimizer = optimizer,
+             data = data)
+}
+
+hnp(model,
+    newclass = TRUE,
+    diagfun = dfun,
+    simfun = sfun,
+    fitfun = ffun,
+    how.many.out = TRUE,
+    plot = TRUE,
+    paint = TRUE,
+    ylab = "Deviance residuals")
+
+
+
