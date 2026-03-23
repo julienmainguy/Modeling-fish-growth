@@ -2,6 +2,7 @@ library(fishmethods)
 library(FSA)
 library(FSAdata)
 library(hnp)
+library(MuMIn)
 library(nlraa)
 library(nlstools)
 library(scam)           ## version 1.2-22 or more recent
@@ -553,25 +554,62 @@ points(tl ~ otoage, pch = 20, data = bdm)
 
 
 
+################################## MULTIPLE-COMPARISON TEST WHEN THREE GROUPS OR MORE #########################################################
 
-
-## MULTIPLE-COMPARISON EXAMPLE OF THREE GROWTH CURVES
+## PERFORMING A MULTIPLE-COMPARISON TEST FOR A CATEGORICAL PREDICTOR: EXAMPLE OF FEMALE LAKE TROUT GROWTH CURVES FROM THREE SAMPLING LOCATIONS  
 
 ## Load the TROUT dataset from the study of Mainguy et al. (2026)
 
 url <- "https://raw.githubusercontent.com/julienmainguy/GAM-adequacy/refs/heads/main/TROUT"
 TROUT <- read.delim(url)
 
+## Fit a model in which Total Length (TL) is a function of LAKE included as a fixed effect and AGE included as a mixed-effects constrain
 TROUT$LAKE <- as.factor(TROUT$LAKE)
 
-m_TROUT_CAT <- scam(TL ~ LAKE + s(AGE, bs = "micv"),
+m_TROUT_LAKE <- scam(TL ~ LAKE + s(AGE, bs = "micv"),
                     family = Gamma(link = "log"),
                     optimizer = "efs",
                     data = TROUT)
 
-summary(m_TROUT_CAT)
+summary(m_TROUT_LAKE)
 
-model <- m_TROUT_CAT
+
+## Fit an alternative (ALT) model for which the fixed LAKE effect is excluded for comparative purposes (i.e., evaluate the importance of the AGE effect)
+
+m_TROUT_ALT <- scam(TL ~ 1 + s(AGE, bs = "micv"),
+                    family = Gamma(link = "log"),
+                    optimizer = "efs",
+                    data = TROUT)
+
+summary(m_TROUT_ALT)
+
+
+## Although not shown here, the step of adequacy assessment with the helper functions for "hnp" would indicate that both gamma SCAMs are inadequate.
+## However, pretending that these would be sufficiently adequate for demonstration purposes, the "MuMIn" package is first used to compare these two
+## candidate models under an information-theoretic approach based on the BIC:
+
+model.sel(m_TROUT_ALT, m_TROUT_LAKE, rank = BIC)
+
+
+## The gamma SCAM including the fixed LAKE effect obtains all the Bayesian weight, clearly indicating that the LAKE effect is statistically supported.
+## With small and moderate sample sizes, as here with n_total = 153 female lake trout, 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+model <- m_TROUT_ALT
 family = Gamma(link = "log")
 method = "ML"
 optimizer = "efs"
@@ -589,7 +627,7 @@ sfun <- function(n, obj) {
 }
 
 ffun <- function(resp) {
-  gam(resp ~ LAKE + s(AGE, bs = "micv"),
+  gam(resp ~ 1 + s(AGE, bs = "micv"),
              family = family,
              method = method,
              optimizer = optimizer,
