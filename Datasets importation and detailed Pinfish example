@@ -100,7 +100,7 @@ GZ_fun <- makeGrowthFun(type = "Gompertz")
 LG_fun <- makeGrowthFun(type = "logistic")
 
 
-## Starting values for the VBGM are first estimated and stored in the object *sv_pinfish_VB*, with the same step identically achieved for
+## Starting values for the VBGM are first estimated and stored in the object *sv_bdm_VB*, with the same step identically achieved for
 ## the GGM and LGM (not shown), again using "FSA".
 
 sv_bdm_VB <- findGrowthStarts(tl ~ otoage, 
