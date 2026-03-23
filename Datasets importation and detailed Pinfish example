@@ -1,3 +1,4 @@
+library(emmeans)
 library(fishmethods)
 library(FSA)
 library(FSAdata)
@@ -558,7 +559,7 @@ points(tl ~ otoage, pch = 20, data = bdm)
 
 ## PERFORMING A MULTIPLE-COMPARISON TEST FOR A CATEGORICAL PREDICTOR: EXAMPLE OF FEMALE LAKE TROUT GROWTH CURVES FROM THREE SAMPLING LOCATIONS  
 
-## Load the TROUT dataset from the study of Mainguy et al. (2026)
+## Load the TROUT dataset from the study of Mainguy et al. (2026) [https://doi.org/10.1002/ece3.72825]
 
 url <- "https://raw.githubusercontent.com/julienmainguy/GAM-adequacy/refs/heads/main/TROUT"
 TROUT <- read.delim(url)
@@ -603,57 +604,17 @@ BICc <- function (obj) {
   return(bicc)
 }
 
+
 ## Compare the two gamma SCAMs based on BICc with the same outcome as above.
 
 model.sel(m_TROUT_ALT, m_TROUT_LAKE, rank = BICc)
 
 
+## Perform a multiple-comparison test with adjusted p-values according to Tukey method for the 3 possible pairwise comparisons using "emmeans":
+
+emm_TROUT_LAKE <- emmeans(m_TROUT_LAKE, "LAKE")
+pairs(emm_TROUT_LAKE)
 
 
-
-
-
-
-
-
-
-
-
-
-model <- m_TROUT_ALT
-family = Gamma(link = "log")
-method = "ML"
-optimizer = "efs"
-data = TROUT
-
-dfun <- function(obj) resid(obj, type = "deviance")
-
-sfun <- function(n, obj) {
-  mu_hat <- fitted(obj)
-  phi <- summary(obj)$dispersion
-  shape <- 1 / phi
-  scale <- mu_hat * phi
-  y <- rgamma(n = length(mu_hat), shape = shape, scale = scale)
-  return(y)
-}
-
-ffun <- function(resp) {
-  gam(resp ~ 1 + s(AGE, bs = "micv"),
-             family = family,
-             method = method,
-             optimizer = optimizer,
-             data = data)
-}
-
-hnp(model,
-    newclass = TRUE,
-    diagfun = dfun,
-    simfun = sfun,
-    fitfun = ffun,
-    how.many.out = TRUE,
-    plot = TRUE,
-    paint = TRUE,
-    ylab = "Deviance residuals")
-
-
-
+## Statistical support is found to indicate that female lake trout from LAKE A exhibit a lower growth than those of LAKE B and C, the latters
+## having instead similar growth curves from a statistical standpoint.
