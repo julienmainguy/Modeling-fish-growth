@@ -292,7 +292,7 @@ logLik <- logLik(m_bdm_VB)
 (attributes(logLik)$df)                           
 
 
-## BAYESIAN INFORMATION CRITERION (BIC)
+## Comparison relying on an information-theoretic approach based on the Bayesian Information Criterion (BIC)
 
 ## BIC(m_bdm_VB, m_bdm_GZ, m_bdm_LG)                                                             ## once the GGM and LGM have also been fitted
 
@@ -531,7 +531,7 @@ logLik<-logLik(m_pinfish_SCAM_GAUSSIAN)
 (attributes(logLik)$df)
 
 
-## BIC
+## Comparison relying on an information-theoretic approach based on BIC
 
 ## Note that the inadequate gamma SCAM is much better supported than the adequate Gaussian SCAM when relying on BIC.
 ## Any information criteria, like AIC and BIC, will rank model regardless of whether they respect their distributional
@@ -592,9 +592,20 @@ model.sel(m_TROUT_ALT, m_TROUT_LAKE, rank = BIC)
 
 
 ## The gamma SCAM including the fixed LAKE effect obtains all the Bayesian weight, clearly indicating that the LAKE effect is statistically supported.
-## With small and moderate sample sizes, as here with n_total = 153 female lake trout, 
+## With small and moderate sample sizes, as here with n_total = 153 female lake trout, the sample-adjusted BIC (BICc) may be preferable and can be used
+## to compare SCAMs too. Here is how to first create a function for the calculation of BICc:
 
+BICc <- function (obj) {
+  bic <- BIC(obj)
+  n <- obj$df.null + 1
+  p <- n - obj$df.residual
+  bicc <- bic + (log(n) * (p + 1) * p)/(n - p - 1)
+  return(bicc)
+}
 
+## Compare the two gamma SCAMs based on BICc with the same outcome as above.
+
+model.sel(m_TROUT_ALT, m_TROUT_LAKE, rank = BICc)
 
 
 
