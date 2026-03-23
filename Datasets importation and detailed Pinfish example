@@ -528,7 +528,7 @@ Summarize(RMSE ~ 1, data = results_bdm_SCAM_GAUSSIAN)
 
 (sd(results_bdm_SCAM_GAUSSIAN$RMSE)/sqrt(n))
 
-logLik<-logLik(m_pinfish_SCAM_GAUSSIAN)
+logLik <- logLik(m_bdm_SCAM_GAUSSIAN)
 (attributes(logLik)$df)
 
 
