@@ -619,7 +619,13 @@ pairs(emm_TROUT_LAKE)
 
 
 ## Statistical support is found to indicate that female lake trout from LAKE A exhibit a lower growth than those of LAKE B and C, the latters
-## having instead similar growth curves from a statistical standpoint.
+## having instead similar growth curves from a statistical standpoint. The plot() function of "emmeans" then allows to visualize the differences
+## between the three LAKE-specific parameter estimates with their respective 95% confidence intervals, again at the linear predictor (log) scale.
 
-## The plot() function of "emmeans" allows to visualize the differences between the three LAKE-specific parameter estimates with their respective
-## 95% confidence intervals, again at the linear predictor (log) scale.
+plot(emm_TROUT_LAKE)
+
+
+## The differences between the LAKE-specific estimates can alternatively be visualized at the response scale with "visreg" by keeping AGE contant
+## by centering AGE on its median (default setting).
+
+visreg(m_TROUT_LAKE, scale = "response", "LAKE")
