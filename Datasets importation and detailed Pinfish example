@@ -610,7 +610,9 @@ BICc <- function (obj) {
 model.sel(m_TROUT_ALT, m_TROUT_LAKE, rank = BICc)
 
 
-## Perform a multiple-comparison test with adjusted p-values according to Tukey method for the 3 possible pairwise comparisons using "emmeans":
+## Perform a multiple-comparison test with adjusted p-values according to Tukey method for the 3 possible pairwise comparisons using "emmeans".
+## Note that using the pairs() function will provide estimates at the linear predictor scale only for models fitted with "scam", such that in
+## this case, although not indicated, the parameter estimates are those yielded on the log scale for gamma SCAM.
 
 emm_TROUT_LAKE <- emmeans(m_TROUT_LAKE, "LAKE")
 pairs(emm_TROUT_LAKE)
@@ -618,3 +620,6 @@ pairs(emm_TROUT_LAKE)
 
 ## Statistical support is found to indicate that female lake trout from LAKE A exhibit a lower growth than those of LAKE B and C, the latters
 ## having instead similar growth curves from a statistical standpoint.
+
+## The plot() function of "emmeans" allows to visualize the differences between the three LAKE-specific parameter estimates with their respective
+## 95% confidence intervals, again at the linear predictor (log) scale.
