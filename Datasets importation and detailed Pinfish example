@@ -407,7 +407,7 @@ round(return_max(hnp_summary), 2)
 model <- m_bdm_SCAM_GAMMA
 family <- Gamma(link = "log")
 optimizer <- "efs"
-data <- dataset
+dataset <- bdm
 
 dfun <- function(obj) resid(obj, type = "deviance")
 
