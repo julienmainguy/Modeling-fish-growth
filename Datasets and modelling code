@@ -34,7 +34,7 @@ pinfish <- pinfish[which(pinfish$sl >= 66),]
 
 ## The descriptive statistics of this reduced dataset, as obtained with the Summarize() function of "FSA", now indicate that
 ## n = 665 pinfish exhibiting an sl varying between 66 and 255 mm are considered. Note that Nelson (2002) reports using n = 658
-## pinfish in his analyses, such that apparently seven additional individual fish were considered here.
+## pinfish in his original analyses, such that apparently seven additional individual fish were considered here.
 
 Summarize(sl ~ 1, data = pinfish)
 
@@ -44,7 +44,7 @@ Summarize(sl ~ 1, data = pinfish)
 ## This example is originally used in the excellent fisheries-related textbook of Ogle (2016, Chapter 12) to show the detailed
 ## application of the von Bertalanffy growth model (VBGM) in which only the males from the BlackDrum2001 dataset found in "FSAdata"
 ## are used. As a first step, only the males are kept and, as done by Ogle (2016), a 51-year-old (oldest) male is also removed,
-## leaving a total of 74 males aged between 3 and 42 years old. To be consistent with Ogle (2016), the reduced data is referred to
+## leaving a total of 74 males aged between 3 and 42 years old. To be consistent with Ogle (2016), the reduced dataset is referred to
 ## as *bdm* for black drum males.
 
 bdm <- BlackDrum2001 [which(BlackDrum2001$sex == "male"),]
@@ -65,7 +65,6 @@ haddock <- read.delim(url)
 
 ## If the automatic importation of the *haddock* dataset fails, it can be downloaded from this same repository and loaded into R with
 ## with the read.delim() function.
-
 
 ## This dataset was however further reduced by Honsey et al. (2017) by discarding the two smallest females despite the fact that these
 ## two observations did not appear to represent outliers, but could possibly have had a leverage effect on the linear relationship describing
@@ -90,21 +89,22 @@ Summarize(age ~ 1, data = RuffeSLRH92)
 ## NOTE
 
 ## As the overall analytical approach is identical for all datasets, only the analysis of the second example for the 74 male black drums (Ogle 2016)
-## is shown below (i.e., small sample size = less computational time being required).
+## is shown below given that it is associated with a small sample size and thus, requires less computational time for demonstrative purposes.
 
 
 ############################## COMMONLY-USED GROWTH MODELS (VON BERTALANFFY, GOMPERTZ, AND LOGISTIC) #########################################
 
 ## Application of the VBGM, with the Gompertz and logistic growth models following the same approach. First, the von Bertalanffy growth
-## function, i.e. VB_fun(), is defined, as for the Gompertz and logistic ones (i.e., GGM and LGM, respectively), using "FSA".
+## function, i.e. VB_fun(), is defined using "FSA".
 
 VB_fun <- makeGrowthFun(type = "von Bertalanffy")
-GZ_fun <- makeGrowthFun(type = "Gompertz")
-LG_fun <- makeGrowthFun(type = "logistic")
+## GZ_fun <- makeGrowthFun(type = "Gompertz")       ## shown but not used here
+## LG_fun <- makeGrowthFun(type = "logistic")       ## shown but not used here
 
 
 ## Starting values for the VBGM are first estimated and stored in the object *sv_bdm_VB*, with the same step identically achieved for
-## the GGM and LGM (not shown), again using "FSA".
+## the GGM and LGM (not shown), again using "FSA". Note that fish length is *tl* for total length in the *bdm* dataset, where and age corresponds
+## to *otoage*, such that these two variables will be modeled as such below.
 
 sv_bdm_VB <- findGrowthStarts(tl ~ otoage, 
                                    type = "von Bertalanffy",
@@ -120,8 +120,7 @@ m_bdm_VB <- nls(tl ~ VB_fun(otoage, Linf, K, t0),
 
 
 ## Yield the summary output and ask for the estimation of the correlation coefficients between the three growth parameters, as provided by the
-## "nlstools" package. Note the high values of the correlation coefficients, especially betweeen Linf and K, and also K and t0. Such moderate to
-##  strong correlations between parameters are not uncommon.
+## "nlstools" package.
 
 summary(m_bdm_VB, correlation = TRUE)
 
@@ -129,8 +128,8 @@ summary(m_bdm_VB, correlation = TRUE)
 ## MODEL ADEQUACY
 
 ## Check the adequacy of *m_bdm_VB* with newly-available helper functions for the "hnp" package. A general Growth Function (GF) must first be created
-## and is identically used for the VBGM, GGM, and LGM. But first, the (i) model, (ii) specific growth function, and (iii) dataset are defined for their use 
-## with the associated code. Note that all the code rely on the information provided for model, growth_fun, and dataset.
+## and is identically used for the VBGM, GGM, and LGM. But first, the (i) model, (ii) specific growth function, and (iii) dataset are defined for their
+## use with the associated code. Note that all the code rely on the information provided for (i), (ii), and (iii).
 
 model <- m_bdm_VB
 growth_fun <- VB_fun
@@ -148,7 +147,7 @@ GF <- function(formula, start, data) {
 
 ## The growth model being assessed for its adequacy, here *m_bdm_VB*, is then refitted as the *original_model* with the just-created
 ## GF() function and the specific one for the investigated growth model, here VB_fun(), which has already been previously defined. Note
-## that how the variables *LENGTH* and *AGE* are referred in the dataset must be indicated in the code in an identical manner, here with
+## that how the variables *LENGTH* and *AGE* are referred in the dataset must be indicated in an identical mannerin the code, here with
 ## *tl* and *otoage*, respectively.
 
 original_model <- GF(tl ~ VB_fun(otoage, Linf, K, t0), 
@@ -180,13 +179,10 @@ ffun <- function(newresp) {
 ## Adequacy assessment based on a single diagnostic iteration with "hnp". A half-normal plot with a simulated envelope is produced.
 ## Because of the simulations being used, each requested iteration will produce results that slightly vary. The paint = TRUE argument
 ## is used such that the residuals found outside the envelope are shown in red, whereas the print = TRUE argument displays the number 
-## and percentage of residuals found outside the envelope directly on the half-normal plot. Note that performing another "hnp" iteration 
-## will often produce a slightly different percentage value each time as a result of the 99 model-based simulations being performed.
-
-## It is recommended to first perform a single hnp diagnostic to visually assess how the residuals are distributed relative to the
-## simulated envelope. For instance, a percentage of residuals found outside the envelope near 0% or 1% already indicates that
-## the considered model is sufficiently adequate, whereas a high value such as 47% or 89% is instead clearly indicative of an 
-## inadequate model.
+## and percentage of residuals found outside the envelope directly on the half-normal plot. It is recommended to first perform a single 
+## hnp diagnostic to visually assess how the residuals are distributed relative to the simulated envelope. For instance, a percentage of
+## residuals found outside the envelope near 0% or 1% already indicates that the considered model is sufficiently adequate, whereas a 
+## high value such as 47% or 89% is instead clearly indicative of an inadequate model.
 
 hnp(original_model,
     newclass = TRUE,
@@ -224,7 +220,7 @@ for(i in 1:n) {
 hnp_summary <- sapply(hnp_obj, function(x) x$out / x$total * 100) 
 
 
-## Estimate the modal percentage of residuals found outside the simulated envelope using the *hnp_summary* object.
+## Estimate the modal percentage of residuals found outside the simulated envelope (see Mainguy et al. 2026) using the *hnp_summary* object.
 
 return_max <- function(numvec) {
   dens <- density(numvec)
@@ -250,18 +246,17 @@ RSS <- sum((prediction - bdm$tl)^2)
 (RMSE_adj <- sqrt(RSS / (n - P)))
 
 
-## LEAVE-ONE-OUT CROSS-VALIDATION (LOO-CV) WITH ONE-STANDARD-ERROR (1SE) RULE BASED ON THE MEAN RMSE
+## LEAVE-ONE-OUT CROSS-VALIDATION (LOO-CV) WITH ONE-STANDARD-ERROR (1SE) RULE BASED ON THE MEAN UNADJUSTED RMSE
 
 ## In this example, removing one observation at a time did not create modeling issues, but this can occur and
 ## would result in having one or likely more zeros values in the data frame containing all the computed RMSE values.
-## If such situation occurs, the Summarize() function of FSA will generate an additional metric *percZero* to
+## If such situation occurs, the Summarize() function of "FSA" will generate an additional metric *percZero* to
 ## indicate the percentage of zeros in the considered dataset. As no observed value is expected to directly correspond
 ## to the predicted value, a zero is highly likely to be attributable to a convergence issue or else. As a result,
 ## the LOO-CV process will be unreliable as the mean RMSE will be further reduced (i.e., lower mean RMSE = better) by
 ## the presence of these zeros. Removing these zeros will not allow to compare the mean RMSE on a same basis neither 
-## when it is compared to another candidate model that experienced no analytical issues. It is recommended to instead
-## rely on conventional diagnostic plots regarding normality and homoscedasticity assessements, such as with the "nlstools"
-## package (see Ogle 2016 for details).
+## when it is compared to another candidate model that experienced no analytical issues. As such, models compared based
+## on the LOO-CV approach with 1SE rule must have an RMSE value associated to each iterative step.
 
 n <- length(bdm$otoage)                                                                             ## as already defined in the previous step above
 RMSE <- numeric(n)
@@ -290,7 +285,7 @@ results_bdm_VB <- data.frame(METHOD = "VB", RMSE)
 (sd(results_bdm_VB$RMSE)/sqrt(n))       
 
 
-## Obtain the parameter degrees of freedom (d.f.) referred to as *P* in the main text, which is always of 4 for the VBGM, GGM, and LGM
+## Obtain the parameter degrees of freedom (d.f.) referred to as *P* in the main text, which is always P = 4 for the VBGM, GGM, and LGM
 
 logLik <- logLik(m_bdm_VB)
 (attributes(logLik)$df)                           
@@ -303,7 +298,7 @@ logLik <- logLik(m_bdm_VB)
 
 ## PREDICTED VALUES
 
-nd <- data.frame(otoage = seq(min(bdm$otoage), max(bdm$otoage), by = 0.1))                       ## select an incremental value (i.e., by = 0.02) allowing to offer a smoothed curve
+nd <- data.frame(otoage = seq(min(bdm$otoage), max(bdm$otoage), by = 0.1))                       ## select an incremental value (i.e., by = 0.1) allowing to offer a smoothed curve
 estimate <- predict(m_bdm_VB, nd, type = "response")
 results <- data.frame(nd, estimate)
 plot(tl ~ otoage, data = bdm)                                                                    ## simple plot showing the observed values
@@ -312,10 +307,10 @@ points(estimate ~ otoage, data = results, pch = 20, type = "b", lwd = 1.5, col =
 
 ############################## SHAPE-CONSTRAINED ADDITIVE MODELING (SCAM) FRAMEWORK #############################################
 
-## The smooth function s() applied to *age* below imposes through *bs = "micv"* a monotically (m) increasing (i) and convave (cv) 
+## The smooth function s() applied to *otoage* below will impose through *s(otoage, bs = "micv")* a monotically (m) increasing (i) and convave (cv) 
 ## curvilinear pattern using the "scam" package.
 
-## Gaussian distribution with identity link
+## Gaussian distribution with identity link while also using the efs optimizer
 
 m_bdm_SCAM_GAUSSIAN <- scam(tl ~ s(otoage, bs = "micv"),    
                             family = gaussian,
@@ -325,7 +320,7 @@ m_bdm_SCAM_GAUSSIAN <- scam(tl ~ s(otoage, bs = "micv"),
 summary(m_bdm_SCAM_GAUSSIAN)
 
 
-## Use the gamma distribution with log link as an alternative
+## Use the gamma distribution with log link as an alternative (again with the efs optimizer)
 
 m_bdm_SCAM_GAMMA <- scam(tl ~ s(otoage, bs = "micv"),
                         family = Gamma(link = "log"),
@@ -340,7 +335,7 @@ summary(m_bdm_SCAM_GAMMA)
 ## Check the adequacy of both models from using slightly modified helper functions for "hnp" presented in Mainguy et al. (2026) for GAMs fitted with "mgcv".
 ## Given that the "scam" package is a direct extension of "mgcv", the required helper functions are nearly identical. In all cases, the sfun() helper function
 ## must be correctly specified relative to the distribution family used, i.e. Gaussian or gamma with log link in this study (see Mainguy et al. 2026). First, 
-## the (i) model, (ii) distribution family, (iii) optimizer, and (iv) dataset used are specified to then process with the step of adequacy assessment. The ffun()
+## the (i) model, (ii) distribution family, (iii) optimizer, and (iv) dataset used are specified to then proceed with the step of adequacy assessment. The ffun()
 ## helper function always need to have the right-part next to *resp ~* be identical to the model being tested (e.g., if *age* is written as *Age* for instance).
 
 ## Assessment of the Gaussian SCAM requiring that the normality and homoscedasticity assumptions are sufficiently respected.
@@ -402,7 +397,7 @@ return_max <- function(numvec) {
 round(return_max(hnp_summary), 2)
 
 
-## Assessment of the gamma SCAM requiring that the variance is sufficiently proportional to the mean. Note that the sfun function for the
+## Assessment of the gamma SCAM requiring that the variance is sufficiently proportional to the mean. Note that the sfun() function for the
 ## gamma SCAM differs from that of the Gaussian SCAM given that it is distribution-specific.
 
 ## First perform a single "hnp" diagnostic
@@ -440,8 +435,7 @@ hnp(model,
     print = TRUE)
 
 
-## Perform 10 "hnp" iterations to get a modal percentage of residuals found outside the simulated envelope.
-## This takes a few minutes.
+## Perform 10 "hnp" iterations to get a modal percentage of residuals found outside the simulated envelope. This takes a few minutes.
 
 set.seed(2026)
 n <- 10
@@ -475,10 +469,9 @@ model <- m_bdm_SCAM_GAMMA
 (D2 <- 100 * (1 - model$deviance / model$null.deviance))          # should match the value provided under "Deviance explained" in the model output
 
 
-## Note that the adjusted R2 provided in the scam() function output (i.e.,*R-sq.(adj)*) is only valid for the Gaussiance case (see the summary
-## for the gamma SCAM as a proof of that where the estimated R2 actually has a lower value than R2_adj). If one needs to penalize D2 for model 
-## complexity to yield an adjusted D2 (D2_adj), the proposed adjustement by Guisan and Zimmermann (2000) should be used, as presented in Mainguy 
-## et al. (2026) for GAMs, and which first requires the calculation of D2 as just shown above (yielding D2_adj < D2, as it should):
+## Note that the adjusted R2 provided in the scam() function output (i.e.,*R-sq.(adj)*) is only valid for the Gaussiance case If one needs to 
+## penalize (i.e. adjust) D2 for model complexity to yield an adjusted D2 (D2_adj), the proposed adjustement by Guisan and Zimmermann (2000) should
+## be used, as presented in Mainguy et al. (2026) for GAMs, such that D2_adj < D2 in all instances.
 
 model <- m_bdm_SCAM_GAMMA
 D2 <- 100 * (1 - model$deviance / model$null.deviance)
@@ -492,15 +485,15 @@ n <- summary(model)$n
 
 ## The three different approaches used to compare the penalized goodness-of-fit of the up to five candidate growth models
 ## are completely identical to those described above for the VBGM. Below, only the Gaussian SCAM is considered to yield
-## these values.
+## these values as an example for the RMSE_adj and LOO-CV with 1SE rule.
 
 ## IMPORTANT: 
 
 ## As opposed to the VBGM, GGM, and LGM, each SCAM will vary in its model parameter d.f. (P) depending on how many
-## effective degrees of freedom (edf) it requires to generate the smoothed growth curve (i.e., less nonlinearity, less edf).
+## effective degrees of freedom (edf) it requires to generate the smoothed growth curve (i.e. less nonlinearity, less edf).
 ## The penalization of the model relies on the "equivalent-df" of the model incorporating both the df (i.e., intercept) and edf.
 ## As such, P for the RMSE_adj and the last part of the code for the LOO-CV and 1SE rule will provide the value reflecting the
-## complexity of the considered SCAM, which is often > 4 (i.e., the fixed value of the VBGM) but can also sometimes be < 4.
+## complexity of the considered SCAM, which is often > 4 (i.e. the fixed value of the VBGM) but can also sometimes be < 4.
 
 ## RMSE_adj (Gaussian SCAM)
 
@@ -556,23 +549,20 @@ visreg(m_bdm_SCAM_GAUSSIAN, scale = "response", rug = FALSE, ylim = c(min(bdm$tl
 points(tl ~ otoage, pch = 20, data = bdm)
 
 
-################################## MULTIPLE-COMPARISON TEST WHEN THREE GROUPS OR MORE #########################################################
+############## MULTIPLE-COMPARISON TEST WHEN THREE GROUPS (LEVELS) OR MORE ARE CONSIDERED FOR A CATEGORICAL VARIABLE (PREDICTOR) #####################
 
-## PERFORMING A MULTIPLE-COMPARISON TEST FOR A CATEGORICAL PREDICTOR: EXAMPLE OF FEMALE LAKE TROUT GROWTH CURVES FROM THREE SAMPLING LOCATIONS  
-
-## Load the TROUT dataset from the study of Mainguy et al. (2026) [https://doi.org/10.1002/ece3.72825]
+## Automatically load the size-at-age data from female lake trout sampled in three nearby water bodies (TROUT dataset; Mainguy et al., 2026)
 
 url <- "https://raw.githubusercontent.com/julienmainguy/GAM-adequacy/refs/heads/main/TROUT"
 TROUT <- read.delim(url)
 
-## If the automatic importation of the *TROUT* dataset fails, it can be downloaded *GAM-adequacy* repository found on the same GitHub and loaded
-## into R with the read.delim() function. Otherwise, the *TROUT* dataset can be directly found here: https://github.com/julienmainguy/GAM-adequacy
+## If the automatic importation of the *TROUT* dataset fails, it can be downloaded from the *GAM-adequacy* repository found on the same GitHub and loaded
+## into R with the read.delim() function. Otherwise, the *TROUT* dataset is directly found here: https://github.com/julienmainguy/GAM-adequacy
 
 
+## Fit a model in which Total Length (TL) is a function of LAKE included as a fixed (categorical) effect and AGE included as a mixed-constraints smooth term.
 
-
-## Fit a model in which Total Length (TL) is a function of LAKE included as a fixed effect and AGE included as a mixed-effects constrain
-TROUT$LAKE <- as.factor(TROUT$LAKE)
+TROUT$LAKE <- as.factor(TROUT$LAKE)                      ## categorical fixed or random effects need to first be defined as a factor
 
 m_TROUT_LAKE <- scam(TL ~ LAKE + s(AGE, bs = "micv"),
                     family = Gamma(link = "log"),
@@ -582,7 +572,7 @@ m_TROUT_LAKE <- scam(TL ~ LAKE + s(AGE, bs = "micv"),
 summary(m_TROUT_LAKE)
 
 
-## Fit an alternative (ALT) model for which the fixed LAKE effect is excluded for comparative purposes (i.e., evaluate the importance of the AGE effect)
+## Fit an alternative (*_ALT*) model for which the fixed LAKE effect is excluded for comparative purposes (i.e., evaluate the importance of the AGE effect)
 
 m_TROUT_ALT <- scam(TL ~ 1 + s(AGE, bs = "micv"),
                     family = Gamma(link = "log"),
@@ -594,7 +584,7 @@ summary(m_TROUT_ALT)
 
 ## Although not shown here, the step of adequacy assessment with the helper functions for "hnp" would indicate that both gamma SCAMs are inadequate.
 ## However, pretending that these would be sufficiently adequate for demonstration purposes, the "MuMIn" package is first used to compare these two
-## candidate models under an information-theoretic approach based on the BIC:
+## candidate models under an information-theoretic approach based on the BIC.
 
 model.sel(m_TROUT_ALT, m_TROUT_LAKE, rank = BIC)
 
@@ -612,27 +602,29 @@ BICc <- function (obj) {
 }
 
 
-## Compare the two gamma SCAMs based on BICc with the same outcome as above.
+## Compare the two gamma SCAMs based on BICc with the same outcome as above being expected.
 
 model.sel(m_TROUT_ALT, m_TROUT_LAKE, rank = BICc)
 
 
-## Perform a multiple-comparison test with adjusted p-values according to Tukey method for the 3 possible pairwise comparisons using "emmeans".
+## Next, perform a multiple-comparison test with adjusted p-values according to Tukey's method for the 3 possible pairwise comparisons using "emmeans".
 ## Note that using the pairs() function will provide estimates at the linear predictor scale only for models fitted with "scam", such that in
-## this case, although not indicated, the parameter estimates are those yielded on the log scale for gamma SCAM.
+## this case, although not indicated in the results output, the parameter estimates are those yielded on the log scale for this gamma SCAM.
 
 emm_TROUT_LAKE <- emmeans(m_TROUT_LAKE, "LAKE")
 pairs(emm_TROUT_LAKE)
 
+## Statistical support is found to indicate that female lake trout from LAKE *A* exhibit a lower growth than those of LAKE *B* and *C*, the latters
+## having instead similar growth curves from a statistical standpoint. 
 
-## Statistical support is found to indicate that female lake trout from LAKE A exhibit a lower growth than those of LAKE B and C, the latters
-## having instead similar growth curves from a statistical standpoint. The plot() function of "emmeans" then allows to visualize the differences
-## between the three LAKE-specific parameter estimates with their respective 95% confidence intervals, again at the linear predictor (log) scale.
+
+## The plot() function of "emmeans" then allows to visualize the differences between the three LAKE-specific parameter estimates with their respective
+## 95% confidence intervals, again at the linear predictor (log) scale.
 
 plot(emm_TROUT_LAKE)
 
 
-## The differences between the LAKE-specific estimates can alternatively be visualized at the response scale with "visreg" by keeping AGE contant
-## by centering AGE on its median (default setting).
+## The differences between the LAKE-specific estimates can alternatively be visualized at the response scale with "visreg" by keeping AGE constant
+## from centering it on its median (default setting).
 
 visreg(m_TROUT_LAKE, scale = "response", "LAKE")
