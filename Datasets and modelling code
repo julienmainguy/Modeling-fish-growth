@@ -63,6 +63,9 @@ Summarize(otoage ~ 1, data = bdm)
 url <- "https://raw.githubusercontent.com/julienmainguy/Modeling-fish-growth/refs/heads/main/haddock.txt"
 haddock <- read.delim(url)
 
+## If the automatic importation of the *haddock* dataset fails, it can be downloaded from this same repository and loaded into R with
+## with the read.delim() function.
+
 
 ## This dataset was however further reduced by Honsey et al. (2017) by discarding the two smallest females despite the fact that these
 ## two observations did not appear to represent outliers, but could possibly have had a leverage effect on the linear relationship describing
@@ -553,8 +556,6 @@ visreg(m_bdm_SCAM_GAUSSIAN, scale = "response", rug = FALSE, ylim = c(min(bdm$tl
 points(tl ~ otoage, pch = 20, data = bdm)
 
 
-
-
 ################################## MULTIPLE-COMPARISON TEST WHEN THREE GROUPS OR MORE #########################################################
 
 ## PERFORMING A MULTIPLE-COMPARISON TEST FOR A CATEGORICAL PREDICTOR: EXAMPLE OF FEMALE LAKE TROUT GROWTH CURVES FROM THREE SAMPLING LOCATIONS  
@@ -563,6 +564,12 @@ points(tl ~ otoage, pch = 20, data = bdm)
 
 url <- "https://raw.githubusercontent.com/julienmainguy/GAM-adequacy/refs/heads/main/TROUT"
 TROUT <- read.delim(url)
+
+## If the automatic importation of the *TROUT* dataset fails, it can be downloaded *GAM-adequacy* repository found on the same GitHub and loaded
+## into R with the read.delim() function. Otherwise, the *TROUT* dataset can be directly found here: https://github.com/julienmainguy/GAM-adequacy
+
+
+
 
 ## Fit a model in which Total Length (TL) is a function of LAKE included as a fixed effect and AGE included as a mixed-effects constrain
 TROUT$LAKE <- as.factor(TROUT$LAKE)
