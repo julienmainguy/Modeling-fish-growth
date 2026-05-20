@@ -98,24 +98,34 @@ Summarize(age ~ 1, data = RuffeSLRH92)
 ## function, i.e. VB_fun(), is defined using "FSA".
 
 VB_fun <- makeGrowthFun(type = "von Bertalanffy")
-## GZ_fun <- makeGrowthFun(type = "Gompertz")       ## shown but not used here
-## LG_fun <- makeGrowthFun(type = "logistic")       ## shown but not used here
+## GZ_fun <- makeGrowthFun(type = "Gompertz")       ## shown but not used below (too repetitive)
+## LG_fun <- makeGrowthFun(type = "logistic")       ## shown but not used below (too repetitive)
+## RG_fun <- makeGrowthFun(type = "Richard")
 
 
-## Starting values for the VBGM are first estimated and stored in the object *sv_bdm_VB*, with the same step identically achieved for
-## the GGM and LGM (not shown), again using "FSA". Note that fish length is *tl* for total length in the *bdm* dataset, where and age corresponds
-## to *otoage*, such that these two variables will be modeled as such below.
+## Starting values for the VBGM and RGM are first estimated and stored in the objects *sv_bdm_VB* and *sv_bdm_RG*, respectively, with the same step 
+## identically achieved for the GGM and LGM (not shown) to compare all common growth models, again using "FSA". Note that fish length is *tl* for 
+## total length in the *bdm* dataset, where and age corresponds to *otoage*, such that these two variables will be modeled as such below.
 
 sv_bdm_VB <- findGrowthStarts(tl ~ otoage, 
                                    type = "von Bertalanffy",
                                    plot = TRUE,
                                    data = bdm)
 
+sv_bdm_RG <- findGrowthStarts(tl ~ otoage, 
+                                   type = "Richards",
+                                   plot = TRUE,
+                                   data = bdm)
 
-## Obtain the final VBGM from jointly using the VB_fun() function and estimated starting values (i.e., *sv_bdm_VB*)
+
+## Obtain the final VBGM and RGM from jointly using the the VB_fun() and RG_fun() functions with corresponding estimated starting values
 
 m_bdm_VB <- nls(tl ~ VB_fun(otoage, Linf, K, t0),
                 start = sv_bdm_VB, 
+                data = bdm)
+
+m_bdm_RG <- nls(tl ~ RG_fun(otoage, Linf, k, ti, b),    ## note the there are 4 growth parameters that differ from the three of the VBGM
+                start = sv_bdm_RG, 
                 data = bdm)
 
 
@@ -124,6 +134,8 @@ m_bdm_VB <- nls(tl ~ VB_fun(otoage, Linf, K, t0),
 
 summary(m_bdm_VB, correlation = TRUE)
 
+summary(m_bdm_RG, correlation = TRUE)
+
 
 ## MODEL ADEQUACY
 
@@ -131,8 +143,8 @@ summary(m_bdm_VB, correlation = TRUE)
 ## and is identically used for the VBGM, GGM, and LGM. But first, the (i) model, (ii) specific growth function, and (iii) dataset are defined for their
 ## use with the associated code. Note that all the code rely on the information provided for (i), (ii), and (iii).
 
-model <- m_bdm_VB
-growth_fun <- VB_fun
+model <- m_bdm_VB          ## change for *m_bdm_RG* to test the RGM
+growth_fun <- VB_fun       ## change for *RG_fun* to test RGM 
 dataset <- bdm
 
 GF <- function(formula, start, data) {
@@ -145,13 +157,13 @@ GF <- function(formula, start, data) {
 }
 
 
-## The growth model being assessed for its adequacy, here *m_bdm_VB*, is then refitted as the *original_model* with the just-created
-## GF() function and the specific one for the investigated growth model, here VB_fun(), which has already been previously defined. Note
-## that how the variables *LENGTH* and *AGE* are referred in the dataset must be indicated in an identical mannerin the code, here with
+## The growth models being assessed for its adequacy, here *m_bdm_VB* and *m_bdm_RG*, are refitted as the *original_model* with the just-created
+## GF() function and the specific one for the investigated growth model, here VB_fun() and RG_fun(), which has already been previously defined. 
+## Note that how the variables *LENGTH* and *AGE* are referred in the dataset must be indicated in an identical manner in the code, here with
 ## *tl* and *otoage*, respectively.
 
-original_model <- GF(tl ~ VB_fun(otoage, Linf, K, t0), 
-                     start = sv_bdm_VB,
+original_model <- GF(tl ~ VB_fun(otoage, Linf, K, t0),       ## use *GF(tl ~ RG_fun(otoage, Linf, k, ti, b)* for the RGM
+                     start = sv_bdm_VB,                      ## use *start = sv_bdm_RG* for the RGM
                      data = dataset)
 
 
@@ -162,15 +174,20 @@ dfun <- function(obj) obj$residuals
 
 sfun <- function(n, obj) {
   theta <- coef(obj$fit)
-  mu <- growth_fun(dataset$otoage, theta[1], theta[2], theta[3])            # the *AGE* variable must be correcly typed, here = *otoage*
+  mu <- VB_fun(bdm$otoage, theta[1], theta[2], theta[3])   ## *AGE* variable here = *otoage* and add *,theta[4]* for the RGM
   sigma <- sigma(obj$fit)
   y <- rnorm(length(mu), mu, sigma)
+  try_fit <- try(ffun(y), silent = TRUE)
+  while(inherits(try_fit, "try-error")) {
+    y <- rnorm(length(mu), mu, sigma)
+    try_fit <- try(ffun(y), silent = TRUE)
+  }
   return(y)
 }
 
 ffun <- function(newresp) {
-  fit <- GF(newresp ~ growth_fun(otoage, Linf, K, t0),                      # the *AGE* variable must be correcly typed, here = *otoage*
-            start = sv_bdm_VB,
+  fit <- GF(newresp ~ growth_fun(otoage, Linf, K, t0),    ## *AGE* variable here = *otoage* and use *growth_fun(otoage, Linf, k, ti, b),* for the RGM
+            start = sv_bdm_VB,                            ## use *start = sv_bdm_RG* for the RGM
             data = dataset %>% mutate(newresp = newresp))
   return(fit)
 }
@@ -235,13 +252,17 @@ round(return_max(hnp_summary), 2)
 
 R2M(m_bdm_VB)$R2 * 100
 
+R2M(m_bdm_RG)$R2 * 100
 
-## ADJUSTED ROOT MEAN SQUARE ERROR (RMSE_adj)
+
+## ADJUSTED ROOT MEAN SQUARE ERROR (RMSE_adj), here for *m_bdm_VB* as an example
+
+model <- m_bdm_VB    ## change for *m_bdm_RG* to calculate the RMSE_adj of the RGM
 
 n <- length(bdm$otoage)
-logLik <- logLik(m_bdm_VB)
+logLik <- logLik(model)
 P <- attributes(logLik)$df
-prediction <- predict(m_bdm_VB, bdm, type = "response")
+prediction <- predict(model, bdm, type = "response")
 RSS <- sum((prediction - bdm$tl)^2)
 (RMSE_adj <- sqrt(RSS / (n - P)))
 
@@ -256,7 +277,8 @@ RSS <- sum((prediction - bdm$tl)^2)
 ## the LOO-CV process will be unreliable as the mean RMSE will be further reduced (i.e., lower mean RMSE = better) by
 ## the presence of these zeros. Removing these zeros will not allow to compare the mean RMSE on a same basis neither 
 ## when it is compared to another candidate model that experienced no analytical issues. As such, models compared based
-## on the LOO-CV approach with 1SE rule must have an RMSE value associated to each iterative step.
+## on the LOO-CV approach with 1SE rule must have an RMSE value associated to each iterative step. Below only the VBGM
+## is tested, but the function can be adapted for the GGM, LGM, and RGM.
 
 n <- length(bdm$otoage)                                                                             ## as already defined in the previous step above
 RMSE <- numeric(n)
@@ -264,28 +286,29 @@ RMSE <- numeric(n)
 for (i in 1:n) {
   train <- bdm[-i, ]                                                                                ## leave out the i-th observation to create a new *train* dataset each time
   test <- bdm[i, ]                                                                                  ## keep the i-th observation as the *test* dataset (n = 1) each time 
-  sv_bdm_VB <- findGrowthStarts(tl ~ otoage, type = "von Bertalanffy", plot = TRUE, data = train)   ## estimate the starting values based on the *train* dataset
-  model <- nls(tl ~ VB_fun(otoage, Linf, K, t0), start = sv_bdm_VB, data = train)                   ## estimate the three growth parameters for the final VBGM based on the "train" dataset
+  sv_bdm_VB <- findGrowthStarts(tl ~ otoage, type = "von Bertalanffy", plot = TRUE, data = train)   ## estimate the starting values based on the *train* dataset (adjust for other growth models)
+  model <- nls(tl ~ VB_fun(otoage, Linf, K, t0), start = sv_bdm_VB, data = train)                   ## estimate the three growth parameters for the final VBGM based on the "train" dataset (adjust for other growht models)
   prediction <- predict(model, test, type = "response")                                             ## yield the related predicted value for the single observation contained in the "test" dataset
   RMSE[i] <- sqrt(mean((prediction-test$tl)^2))                                                     ## calculate the RMSE each time
 }
 
-## Store all the RMSE values in a same data frame
+## Store all the RMSE values in a same data frame, here again with VBGM as an example
 
 results_bdm_VB <- data.frame(METHOD = "VB", RMSE)                                                
 
 
-## Obtain the mean RMSE from this LOO-CV approach
+## Obtain the mean RMSE from this LOO-CV approach for the VBGM
 
 (mean(results_bdm_VB$RMSE))
 
 
-## Calculate the estimated standard error (SE) to be used for the 1SE rule
+## Calculate the estimated standard error (SE) for the same VBGM to be used for the 1SE rule
 
 (sd(results_bdm_VB$RMSE)/sqrt(n))       
 
 
-## Obtain the parameter degrees of freedom (d.f.) referred to as *P* in the main text, which is always P = 4 for the VBGM, GGM, and LGM
+## Obtain the parameter degrees of freedom (d.f.) referred to as *P* in the main text, which is always P = 4 for the VBGM, GGM, and LGM,
+## and P = 5 for the RGM
 
 logLik <- logLik(m_bdm_VB)
 (attributes(logLik)$df)                           
@@ -293,15 +316,16 @@ logLik <- logLik(m_bdm_VB)
 
 ## Comparison relying on an information-theoretic approach based on the Bayesian Information Criterion (BIC)
 
-## BIC(m_bdm_VB, m_bdm_GZ, m_bdm_LG)                                                             ## once the GGM and LGM have also been fitted
+## BIC(m_bdm_VB, m_bdm_GZ, m_bdm_LG, m_bdm_RG)                                                   ## once the GGM, LGM, and RGM have also been fitted
 
 
 ## PREDICTED VALUES
 
+model <- m_bdm_VB 
 nd <- data.frame(otoage = seq(min(bdm$otoage), max(bdm$otoage), by = 0.1))                       ## select an incremental value (i.e., by = 0.1) allowing to offer a smoothed curve
-estimate <- predict(m_bdm_VB, nd, type = "response")
+estimate <- predict(model, nd, type = "response")
 results <- data.frame(nd, estimate)
-plot(tl ~ otoage, data = bdm)                                                                    ## simple plot showing the observed values
+plot(tl ~ otoage, data = bdm)                                                                    ## quick simple plot showing the observed values
 points(estimate ~ otoage, data = results, pch = 20, type = "b", lwd = 1.5, col = "red")          ## adding the predicted values to assess their fit to the length-at-age data
 
 
