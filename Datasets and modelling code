@@ -613,24 +613,6 @@ summary(m_TROUT_ALT)
 model.sel(m_TROUT_ALT, m_TROUT_LAKE, rank = BIC)
 
 
-## The gamma SCAM including the fixed LAKE effect obtains all the Bayesian weight, clearly indicating that the LAKE effect is statistically supported.
-## With small and moderate sample sizes, as here with n_total = 153 female lake trout, the sample-adjusted BIC (BICc) may be preferable and can be used
-## to compare SCAMs too. Here is how to first create a function for the calculation of BICc:
-
-BICc <- function (obj) {
-  bic <- BIC(obj)
-  n <- obj$df.null + 1
-  p <- n - obj$df.residual
-  bicc <- bic + (log(n) * (p + 1) * p)/(n - p - 1)
-  return(bicc)
-}
-
-
-## Compare the two gamma SCAMs based on BICc with the same outcome as above being expected.
-
-model.sel(m_TROUT_ALT, m_TROUT_LAKE, rank = BICc)
-
-
 ## Next, perform a multiple-comparison test with adjusted p-values according to Tukey's method for the 3 possible pairwise comparisons using "emmeans".
 ## Note that using the pairs() function will provide estimates at the linear predictor scale only for models fitted with "scam", such that in
 ## this case, although not indicated in the results output, the parameter estimates are those yielded on the log scale for this gamma SCAM.
